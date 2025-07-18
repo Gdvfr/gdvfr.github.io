@@ -2,14 +2,14 @@
   "players": [
     {
       "name": "_648k",
-      "tier": "ht1",
-      "reason": "Plugin Dev God",
+      "tier": "HT1",
+      "reason": "Grand Master",
       "icon": "https://minotar.net/avatar/_648k"
     },
     {
       "name": "NotAstraa",
-      "tier": "ht2",
-      "reason": "Top PVPer",
+      "tier": "HT2",
+      "reason": "Combat Master",
       "icon": "https://minotar.net/avatar/NotAstraa"
     }
   ]
