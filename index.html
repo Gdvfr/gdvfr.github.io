@@ -1,13 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>648k Tiers</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Tier Lookup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #2c2f33; /* Dark background similar to gaming apps */
+            color: #ffffff; /* White text */
+        }
+        .container {
+            max-width: 90%;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            background-color: #23272a; /* Slightly lighter dark background for card */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5); /* Stronger shadow */
+        }
+        input[type="text"] {
+            background-color: #36393f; /* Darker input field */
+            border: 1px solid #4f545c; /* Subtle border */
+            color: #ffffff;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #7289da; /* Discord-like blue focus */
+        }
+        button {
+            background-color: #7289da; /* Discord-like blue button */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        button:hover {
+            background-color: #677bc4; /* Darker blue on hover */
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        #result-display {
+            background-color: #36393f;
+            border: 1px solid #4f545c;
+            border-radius: 0.75rem;
+            min-height: 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #43b581; /* Green for success/tier found */
+        }
+        .not-found {
+            color: #f04747 !important; /* Red for not found */
+        }
+        /* Responsive adjustments */
+        @media (min-width: 640px) {
+            .container {
+                max-width: 600px; /* Wider on desktop */
+                padding: 2rem;
+            }
+            input[type="text"] {
+                font-size: 1rem;
+            }
+            button {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
-<body>
-  <h1>648k's Tier List</h1>
-  <div id="tier-container"></div>
-  <script src="script.js"></script>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="container mx-auto text-center">
+        <h1 class="text-3xl font-bold mb-6 text-white">Minecraft Tier Lookup Simulation</h1>
+        <p class="text-md mb-8 text-gray-300">
+            Author: <span class="font-semibold text-purple-400">_648k</span>
+            <br>
+            Enter a Minecraft username to see their simulated PvP tier.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 mb-8">
+            <input type="text" id="usernameInput" placeholder="Enter Minecraft Username" class="flex-grow">
+            <button id="lookupButton">Lookup Tier</button>
+        </div>
+
+        <div id="result-display" class="w-full text-center">
+            <p>Enter a username above.</p>
+        </div>
+    </div>
+
+    <script>
+        // Simulate a JSON file that would be hosted on a website
+        // In a real mod, you would fetch this from a URL.
+        const tierData = {
+            "players": [
+                {"username": "_648k", "tier": "HT1", "gamemode": "Sword"},
+                {"username": "Notch", "tier": "LT5", "gamemode": "Axe"},
+                {"username": "Jeb", "tier": "HT3", "gamemode": "PotPvP"},
+                {"username": "Minecrafter123", "tier": "HT4", "gamemode": "Crystal"},
+                {"username": "PvPPro", "tier": "LT1", "gamemode": "UHC"},
+                {"username": "BuilderGuy", "tier": "LT5", "gamemode": "SMP"},
+                {"username": "RedstoneWizard", "tier": "HT2", "gamemode": "NethPot"}
+                // Add more simulated player data here
+            ]
+        };
+
+        const usernameInput = document.getElementById('usernameInput');
+        const lookupButton = document.getElementById('lookupButton');
+        const resultDisplay = document.getElementById('result-display');
+
+        lookupButton.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            if (username === '') {
+                resultDisplay.textContent = 'Please enter a username.';
+                resultDisplay.classList.add('not-found');
+                return;
+            }
+
+            // Simulate searching through the fetched JSON data
+            const player = tierData.players.find(p => p.username.toLowerCase() === username.toLowerCase());
+
+            if (player) {
+                resultDisplay.textContent = `${player.username}'s Tier: ${player.tier} (${player.gamemode})`;
+                resultDisplay.classList.remove('not-found');
+            } else {
+                resultDisplay.textContent = `Username "${username}" not found in tiers.`;
+                resultDisplay.classList.add('not-found');
+            }
+        });
+    </script>
 </body>
 </html>
