@@ -180,8 +180,9 @@
                 displayPlayers(); // Initial display
             } catch (error) {
                 console.error("Could not fetch player tiers:", error);
-                resultDisplay.textContent = 'Failed to load player data.';
-                resultDisplay.classList.remove('hidden');
+                // Display a user-friendly message if loading fails
+                noResults.classList.remove('hidden');
+                noResults.textContent = 'Failed to load player data. Please ensure tiers.json is available.';
             } finally {
                 loadingIndicator.classList.add('hidden');
                 playerTableContainer.classList.remove('hidden');
@@ -191,6 +192,7 @@
         function displayPlayers() {
             playerTableBody.innerHTML = ''; // Clear existing rows
             noResults.classList.add('hidden'); // Hide no results message initially
+            noResults.textContent = 'No players found matching your criteria.'; // Reset default message
 
             const searchTerm = searchInput.value.toLowerCase();
             const selectedGamemode = gamemodeFilter.value;
