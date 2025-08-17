@@ -3,139 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Tier Lookup</title>
+    <title>McTiers - Rankings by _648k</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #2c2f33; /* Dark background similar to gaming apps */
-            color: #ffffff; /* White text */
+            background-color: #1e1e2e; /* Deep purple-blue for dark theme */
+            color: #cdd6f4; /* Light text for contrast */
         }
         .container {
-            max-width: 90%;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            background-color: #23272a; /* Slightly lighter dark background for card */
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5); /* Stronger shadow */
+            max-width: 1200px;
+            padding: 2rem;
         }
-        input[type="text"] {
-            background-color: #36393f; /* Darker input field */
-            border: 1px solid #4f545c; /* Subtle border */
-            color: #ffffff;
+        .card {
+            background-color: #28283d; /* Slightly lighter card background */
+            border-radius: 1rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Stronger shadow */
+            padding: 2rem;
+        }
+        input[type="text"], select {
+            background-color: #313244; /* Darker input/select fields */
+            border: 1px solid #45475a;
+            color: #cdd6f4;
             border-radius: 0.5rem;
             padding: 0.75rem 1rem;
             transition: border-color 0.2s;
         }
-        input[type="text"]:focus {
+        input[type="text"]:focus, select:focus {
             outline: none;
-            border-color: #7289da; /* Discord-like blue focus */
+            border-color: #89b4fa; /* Accent blue focus */
         }
-        button {
-            background-color: #7289da; /* Discord-like blue button */
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: background-color 0.2s, transform 0.1s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-        button:hover {
-            background-color: #677bc4; /* Darker blue on hover */
-            transform: translateY(-1px);
-        }
-        button:active {
-            transform: translateY(0);
-            box-shadow: none;
-        }
-        #result-display {
-            background-color: #36393f;
-            border: 1px solid #4f545c;
-            border-radius: 0.75rem;
-            min-height: 4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
+        .table-header {
+            background-color: #313244;
+            color: #cdd6f4;
             font-weight: 700;
-            color: #43b581; /* Green for success/tier found */
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
         }
-        .not-found {
-            color: #f04747 !important; /* Red for not found */
+        .table-row {
+            background-color: #28283d;
+            border-bottom: 1px solid #45475a;
         }
-        /* Responsive adjustments */
-        @media (min-width: 640px) {
-            .container {
-                max-width: 600px; /* Wider on desktop */
-                padding: 2rem;
-            }
-            input[type="text"] {
-                font-size: 1rem;
-            }
-            button {
-                font-size: 1rem;
-            }
+        .table-row:nth-child(even) {
+            background-color: #2b2b40; /* Slightly different shade for even rows */
+        }
+        .table-row td {
+            padding: 0.75rem 1rem;
+        }
+        .tier-ht1 { color: #f9e2af; } /* Gold */
+        .tier-lt1 { color: #eed49f; }
+        .tier-ht2 { color: #a6da95; } /* Green */
+        .tier-lt2 { color: #95d383; }
+        .tier-ht3 { color: #f4b8e4; } /* Pink/Purple */
+        .tier-lt3 { color: #ebacdb; }
+        .tier-ht4 { color: #f2cdcd; } /* Light Red */
+        .tier-lt4 { color: #e8c0c0; }
+        .tier-ht5 { color: #f5c2e7; } /* Lavender */
+        .tier-lt5 { color: #ebafd3; }
+        .loading-spinner {
+            border: 4px solid rgba(205, 214, 244, 0.2);
+            border-top: 4px solid #89b4fa;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="flex flex-col items-center min-h-screen py-8">
     <div class="container mx-auto text-center">
-        <h1 class="text-3xl font-bold mb-6 text-white">Minecraft Tier Lookup Simulation</h1>
-        <p class="text-md mb-8 text-gray-300">
-            Author: <span class="font-semibold text-purple-400">_648k</span>
+        <h1 class="text-5xl font-extrabold mb-4 text-purple-300 drop-shadow-lg">McTiers Rankings</h1>
+        <p class="text-xl mb-8 text-gray-400">
+            The Official PvP Tier List for Minecraft 1.21.5+
             <br>
-            Enter a Minecraft username to see their simulated PvP tier.
+            Author: <span class="font-semibold text-pink-400">_648k</span>
         </p>
 
-        <div class="flex flex-col sm:flex-row gap-4 mb-8">
-            <input type="text" id="usernameInput" placeholder="Enter Minecraft Username" class="flex-grow">
-            <button id="lookupButton">Lookup Tier</button>
-        </div>
+        <div class="card w-full max-w-4xl mx-auto mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <input type="text" id="searchInput" placeholder="Search by Username..." class="w-full">
+                <select id="gamemodeFilter" class="w-full">
+                    <option value="">All Gamemodes</option>
+                    <option value="Sword">Sword</option>
+                    <option value="Axe">Axe</option>
+                    <option value="PotPvP">PotPvP</option>
+                    <option value="Crystal">Crystal</option>
+                    <option value="UHC">UHC</option>
+                    <option value="SMP">SMP</option>
+                    <option value="NethPot">NethPot</option>
+                </select>
+                <select id="tierFilter" class="w-full">
+                    <option value="">All Tiers</option>
+                    <option value="HT1">HT1</option>
+                    <option value="LT1">LT1</option>
+                    <option value="HT2">HT2</option>
+                    <option value="LT2">LT2</option>
+                    <option value="HT3">HT3</option>
+                    <option value="LT3">LT3</option>
+                    <option value="HT4">HT4</option>
+                    <option value="LT4">LT4</option>
+                    <option value="HT5">HT5</option>
+                    <option value="LT5">LT5</option>
+                </select>
+            </div>
 
-        <div id="result-display" class="w-full text-center">
-            <p>Enter a username above.</p>
+            <div id="loadingIndicator" class="flex justify-center items-center py-8">
+                <div class="loading-spinner"></div>
+                <p class="ml-4 text-gray-400 text-lg">Loading ranks...</p>
+            </div>
+
+            <div id="playerTableContainer" class="overflow-x-auto rounded-lg hidden">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header rounded-tl-lg">Rank</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header">Username</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header">Gamemode</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header rounded-tr-lg">Tier</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playerTableBody" class="divide-y divide-gray-700">
+                        <!-- Player rows will be injected here by JavaScript -->
+                    </tbody>
+                </table>
+                <p id="noResults" class="text-center text-red-400 py-8 hidden">No players found matching your criteria.</p>
+            </div>
         </div>
     </div>
 
     <script>
-        // Simulate a JSON file that would be hosted on a website
-        // In a real mod, you would fetch this from a URL.
-        const tierData = {
-            "players": [
-                {"username": "_648k", "tier": "HT1", "gamemode": "Sword"},
-                {"username": "Notch", "tier": "LT5", "gamemode": "Axe"},
-                {"username": "Jeb", "tier": "HT3", "gamemode": "PotPvP"},
-                {"username": "Minecrafter123", "tier": "HT4", "gamemode": "Crystal"},
-                {"username": "PvPPro", "tier": "LT1", "gamemode": "UHC"},
-                {"username": "BuilderGuy", "tier": "LT5", "gamemode": "SMP"},
-                {"username": "RedstoneWizard", "tier": "HT2", "gamemode": "NethPot"}
-                // Add more simulated player data here
-            ]
-        };
+        const searchInput = document.getElementById('searchInput');
+        const gamemodeFilter = document.getElementById('gamemodeFilter');
+        const tierFilter = document.getElementById('tierFilter');
+        const playerTableBody = document.getElementById('playerTableBody');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const playerTableContainer = document.getElementById('playerTableContainer');
+        const noResults = document.getElementById('noResults');
 
-        const usernameInput = document.getElementById('usernameInput');
-        const lookupButton = document.getElementById('lookupButton');
-        const resultDisplay = document.getElementById('result-display');
+        let allPlayers = []; // Store the fetched data
 
-        lookupButton.addEventListener('click', () => {
-            const username = usernameInput.value.trim();
-            if (username === '') {
-                resultDisplay.textContent = 'Please enter a username.';
-                resultDisplay.classList.add('not-found');
+        // Function to assign CSS class based on tier for styling
+        function getTierClass(tier) {
+            switch(tier) {
+                case 'HT1': return 'tier-ht1';
+                case 'LT1': return 'tier-lt1';
+                case 'HT2': return 'tier-ht2';
+                case 'LT2': return 'tier-lt2';
+                case 'HT3': return 'tier-lt3'; // Using lt3 color as pink
+                case 'LT3': return 'tier-lt3';
+                case 'HT4': return 'tier-ht4';
+                case 'LT4': return 'tier-lt4';
+                case 'HT5': return 'tier-ht5'; // Using lt5 color as lavender
+                case 'LT5': return 'tier-lt5';
+                default: return '';
+            }
+        }
+
+        async function fetchPlayerTiers() {
+            loadingIndicator.classList.remove('hidden');
+            playerTableContainer.classList.add('hidden');
+            noResults.classList.add('hidden');
+
+            try {
+                // Fetch the JSON data from the tiers.json file
+                const response = await fetch('tiers.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                allPlayers = data.players; // Store fetched data
+                displayPlayers(); // Initial display
+            } catch (error) {
+                console.error("Could not fetch player tiers:", error);
+                resultDisplay.textContent = 'Failed to load player data.';
+                resultDisplay.classList.remove('hidden');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                playerTableContainer.classList.remove('hidden');
+            }
+        }
+
+        function displayPlayers() {
+            playerTableBody.innerHTML = ''; // Clear existing rows
+            noResults.classList.add('hidden'); // Hide no results message initially
+
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedGamemode = gamemodeFilter.value;
+            const selectedTier = tierFilter.value;
+
+            let filteredPlayers = allPlayers.filter(player => {
+                const matchesSearch = player.username.toLowerCase().includes(searchTerm);
+                const matchesGamemode = selectedGamemode === '' || player.gamemode === selectedGamemode;
+                const matchesTier = selectedTier === '' || player.tier === selectedTier;
+                return matchesSearch && matchesGamemode && matchesTier;
+            });
+
+            // Sort players by tier (HT1-LT5)
+            const tierOrder = ['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5'];
+            filteredPlayers.sort((a, b) => tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier));
+
+            if (filteredPlayers.length === 0) {
+                noResults.classList.remove('hidden');
                 return;
             }
 
-            // Simulate searching through the fetched JSON data
-            const player = tierData.players.find(p => p.username.toLowerCase() === username.toLowerCase());
+            filteredPlayers.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.classList.add('table-row');
+                row.innerHTML = `
+                    <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-300">${index + 1}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-white">${player.username}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-400">${player.gamemode}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-lg font-bold ${getTierClass(player.tier)}">${player.tier}</td>
+                `;
+                playerTableBody.appendChild(row);
+            });
+        }
 
-            if (player) {
-                resultDisplay.textContent = `${player.username}'s Tier: ${player.tier} (${player.gamemode})`;
-                resultDisplay.classList.remove('not-found');
-            } else {
-                resultDisplay.textContent = `Username "${username}" not found in tiers.`;
-                resultDisplay.classList.add('not-found');
-            }
-        });
+        // Add event listeners for filters
+        searchInput.addEventListener('input', displayPlayers);
+        gamemodeFilter.addEventListener('change', displayPlayers);
+        tierFilter.addEventListener('change', displayPlayers);
+
+        // Fetch data when the page loads
+        window.onload = fetchPlayerTiers;
     </script>
 </body>
 </html>
