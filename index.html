@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,85 +7,144 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* Catppuccin Macchiato palette for a consistent, calming dark theme */
+        :root {
+            --mocha-bg: #1e1e2e;
+            --mocha-crust: #28283d;
+            --mocha-surface: #313244;
+            --mocha-border: #45475a;
+            --mocha-text: #cdd6f4;
+            --mocha-subtext: #bac2de;
+            --mocha-blue: #89b4fa;
+            --mocha-green: #a6da95;
+            --mocha-gold: #f9e2af;
+            --mocha-pink: #f4b8e4;
+            --mocha-red: #f2cdcd;
+            --mocha-lavender: #b7b7ff; /* A slightly more vibrant lavender for contrast */
+            --mocha-dark-text: #4c526f; /* A darker text color for some elements */
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1e1e2e; /* Deep purple-blue for dark theme */
-            color: #cdd6f4; /* Light text for contrast */
+            background-color: var(--mocha-bg);
+            color: var(--mocha-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+
         .container {
             max-width: 1200px;
             padding: 2rem;
         }
+
         .card {
-            background-color: #28283d; /* Slightly lighter card background */
-            border-radius: 1rem;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Stronger shadow */
-            padding: 2rem;
+            background-color: var(--mocha-crust);
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Deeper shadow */
+            padding: 2.5rem; /* More padding */
+            transition: transform 0.3s ease;
         }
+        .card:hover {
+            transform: translateY(-5px); /* Subtle hover lift */
+        }
+
         input[type="text"], select {
-            background-color: #313244; /* Darker input/select fields */
-            border: 1px solid #45475a;
-            color: #cdd6f4;
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            transition: border-color 0.2s;
+            background-color: var(--mocha-surface);
+            border: 1px solid var(--mocha-border);
+            color: var(--mocha-text);
+            border-radius: 0.75rem; /* More rounded input fields */
+            padding: 0.75rem 1.25rem;
+            transition: border-color 0.2s, background-color 0.2s;
+            appearance: none; /* Removes default select arrow */
         }
         input[type="text"]:focus, select:focus {
             outline: none;
-            border-color: #89b4fa; /* Accent blue focus */
+            border-color: var(--mocha-blue);
+            box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2); /* Blue glow on focus */
         }
+
         .table-header {
-            background-color: #313244;
-            color: #cdd6f4;
+            background-color: var(--mocha-surface);
+            color: var(--mocha-subtext);
             font-weight: 700;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
+            padding: 1rem 1.5rem; /* More padding */
+            border-radius: 0.75rem; /* Consistent border radius */
+            letter-spacing: 0.05em; /* Add some letter spacing */
         }
+        
         .table-row {
-            background-color: #28283d;
-            border-bottom: 1px solid #45475a;
+            background-color: var(--mocha-crust);
+            border-bottom: 1px solid var(--mocha-border);
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .table-row:last-child {
+            border-bottom: none; /* No border on the last row */
         }
         .table-row:nth-child(even) {
-            background-color: #2b2b40; /* Slightly different shade for even rows */
+            background-color: #2b2b40;
         }
+        .table-row:hover {
+            background-color: #313244;
+            transform: scale(1.01); /* Subtle row zoom effect */
+        }
+
         .table-row td {
-            padding: 0.75rem 1rem;
+            padding: 1rem 1.5rem; /* More padding for cells */
         }
-        .tier-ht1 { color: #f9e2af; } /* Gold */
-        .tier-lt1 { color: #eed49f; }
-        .tier-ht2 { color: #a6da95; } /* Green */
-        .tier-lt2 { color: #95d383; }
-        .tier-ht3 { color: #f4b8e4; } /* Pink/Purple */
+
+        /* Tier Colors with better contrast */
+        .tier-ht1 { color: var(--mocha-gold); text-shadow: 0 0 5px rgba(249, 226, 175, 0.4); }
+        .tier-lt1 { color: #f2e7c4; } /* Slightly less saturated gold */
+        .tier-ht2 { color: var(--mocha-green); text-shadow: 0 0 5px rgba(166, 218, 149, 0.4); }
+        .tier-lt2 { color: #b7e3a9; } /* Slightly less saturated green */
+        .tier-ht3 { color: var(--mocha-pink); text-shadow: 0 0 5px rgba(244, 184, 228, 0.4); }
         .tier-lt3 { color: #ebacdb; }
-        .tier-ht4 { color: #f2cdcd; } /* Light Red */
+        .tier-ht4 { color: var(--mocha-red); text-shadow: 0 0 5px rgba(242, 205, 205, 0.4); }
         .tier-lt4 { color: #e8c0c0; }
-        .tier-ht5 { color: #f5c2e7; } /* Lavender */
-        .tier-lt5 { color: #ebafd3; }
+        .tier-ht5 { color: var(--mocha-lavender); text-shadow: 0 0 5px rgba(183, 183, 255, 0.4); }
+        .tier-lt5 { color: #c4c4e7; } /* Less saturated lavender */
+
         .loading-spinner {
-            border: 4px solid rgba(205, 214, 244, 0.2);
-            border-top: 4px solid #89b4fa;
+            border: 4px solid var(--mocha-border);
+            border-top: 4px solid var(--mocha-blue);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            width: 50px; /* Slightly larger spinner */
+            height: 50px;
+            animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite; /* More dynamic animation curve */
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--mocha-crust);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--mocha-surface);
+            border-radius: 10px;
+            border: 3px solid var(--mocha-crust);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #45475a;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen py-8">
     <div class="container mx-auto text-center">
-        <h1 class="text-5xl font-extrabold mb-4 text-purple-300 drop-shadow-lg">McTiers Rankings</h1>
-        <p class="text-xl mb-8 text-gray-400">
+        <h1 class="text-6xl font-extrabold mb-4 text-purple-300 drop-shadow-lg">McTiers Rankings</h1>
+        <p class="text-xl mb-12 text-gray-400">
             The Official PvP Tier List for Minecraft 1.21.5+
             <br>
-            Author: <span class="font-semibold text-pink-400">_648k</span>
+            Author: <span class="font-semibold text-pink-400 hover:text-pink-300 transition-colors duration-300">_648k</span>
         </p>
 
-        <div class="card w-full max-w-4xl mx-auto mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="card w-full max-w-5xl mx-auto mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <input type="text" id="searchInput" placeholder="Search by Username..." class="w-full">
                 <select id="gamemodeFilter" class="w-full">
                     <option value="">All Gamemodes</option>
@@ -111,26 +171,25 @@
                 </select>
             </div>
 
-            <div id="loadingIndicator" class="flex justify-center items-center py-8">
+            <div id="loadingIndicator" class="flex flex-col justify-center items-center py-12">
                 <div class="loading-spinner"></div>
-                <p class="ml-4 text-gray-400 text-lg">Loading ranks...</p>
+                <p class="mt-4 text-gray-400 text-lg animate-pulse">Loading ranks...</p>
             </div>
 
-            <div id="playerTableContainer" class="overflow-x-auto rounded-lg hidden">
+            <div id="playerTableContainer" class="overflow-x-auto rounded-xl hidden">
                 <table class="min-w-full divide-y divide-gray-700">
                     <thead>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header rounded-tl-lg">Rank</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header rounded-tl-xl">Rank</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header">Username</th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header">Gamemode</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header rounded-tr-lg">Tier</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider table-header rounded-tr-xl">Tier</th>
                         </tr>
                     </thead>
                     <tbody id="playerTableBody" class="divide-y divide-gray-700">
-                        <!-- Player rows will be injected here by JavaScript -->
-                    </tbody>
+                        </tbody>
                 </table>
-                <p id="noResults" class="text-center text-red-400 py-8 hidden">No players found matching your criteria.</p>
+                <p id="noResults" class="text-center text-red-400 py-12 hidden text-lg">No players found matching your criteria.</p>
             </div>
         </div>
     </div>
@@ -144,20 +203,19 @@
         const playerTableContainer = document.getElementById('playerTableContainer');
         const noResults = document.getElementById('noResults');
 
-        let allPlayers = []; // Store the fetched data
+        let allPlayers = [];
 
-        // Function to assign CSS class based on tier for styling
         function getTierClass(tier) {
             switch(tier) {
                 case 'HT1': return 'tier-ht1';
                 case 'LT1': return 'tier-lt1';
                 case 'HT2': return 'tier-ht2';
                 case 'LT2': return 'tier-lt2';
-                case 'HT3': return 'tier-lt3'; // Using lt3 color as pink
+                case 'HT3': return 'tier-ht3';
                 case 'LT3': return 'tier-lt3';
                 case 'HT4': return 'tier-ht4';
                 case 'LT4': return 'tier-lt4';
-                case 'HT5': return 'tier-lt5'; // Using lt5 color as lavender
+                case 'HT5': return 'tier-ht5';
                 case 'LT5': return 'tier-lt5';
                 default: return '';
             }
@@ -169,29 +227,27 @@
             noResults.classList.add('hidden');
 
             try {
-                // Fetch the JSON data from the tiers.json file
                 const response = await fetch('tiers.json');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                allPlayers = data.players; // Store fetched data
-                displayPlayers(); // Initial display
+                allPlayers = data.players;
+                displayPlayers();
             } catch (error) {
                 console.error("Could not fetch player tiers:", error);
-                // Display a user-friendly message if loading fails
                 noResults.classList.remove('hidden');
                 noResults.textContent = 'Failed to load player data. Please ensure tiers.json is available.';
+                playerTableContainer.classList.remove('hidden');
             } finally {
                 loadingIndicator.classList.add('hidden');
-                playerTableContainer.classList.remove('hidden');
             }
         }
 
         function displayPlayers() {
-            playerTableBody.innerHTML = ''; // Clear existing rows
-            noResults.classList.add('hidden'); // Hide no results message initially
-            noResults.textContent = 'No players found matching your criteria.'; // Reset default message
+            playerTableBody.innerHTML = '';
+            noResults.classList.add('hidden');
+            noResults.textContent = 'No players found matching your criteria.';
 
             const searchTerm = searchInput.value.toLowerCase();
             const selectedGamemode = gamemodeFilter.value;
@@ -204,11 +260,9 @@
                 return matchesSearch && matchesGamemode && matchesTier;
             });
 
-            // Sort players by tier (HT1-LT5)
             const tierOrder = ['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5'];
             filteredPlayers.sort((a, b) => tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier));
 
-            // Limit to the top 100 players after sorting
             const playersToDisplay = filteredPlayers.slice(0, 100);
 
             if (playersToDisplay.length === 0) {
@@ -216,25 +270,26 @@
                 return;
             }
 
-            playersToDisplay.forEach((player, index) => { // Changed filteredPlayers to playersToDisplay
+            // Show the table once data is ready
+            playerTableContainer.classList.remove('hidden');
+
+            playersToDisplay.forEach((player, index) => {
                 const row = document.createElement('tr');
                 row.classList.add('table-row');
                 row.innerHTML = `
                     <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-300">${index + 1}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-white">${player.username}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm font-semibold text-white">${player.username}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-400">${player.gamemode}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-lg font-bold ${getTierClass(player.tier)}">${player.tier}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-lg font-extrabold ${getTierClass(player.tier)}">${player.tier}</td>
                 `;
                 playerTableBody.appendChild(row);
             });
         }
 
-        // Add event listeners for filters
         searchInput.addEventListener('input', displayPlayers);
         gamemodeFilter.addEventListener('change', displayPlayers);
         tierFilter.addEventListener('change', displayPlayers);
 
-        // Fetch data when the page loads
         window.onload = fetchPlayerTiers;
     </script>
 </body>
