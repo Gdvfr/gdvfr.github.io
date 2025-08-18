@@ -205,81 +205,7 @@
         const noResults = document.getElementById('noResults');
         const tabButtons = document.querySelectorAll('.tab-button');
 
-        // Embedded sample data to resolve the fetch error
-        let allPlayers = [
-            {
-                "username": "Marlowww",
-                "skin": "https://mc-heads.net/avatar/Marlowww/100",
-                "title": "Combat Grandmaster",
-                "points": 405,
-                "region": "NA",
-                "tiers": {
-                    "Sword": "HT1",
-                    "Axe": "HT1",
-                    "PotPvP": "LT1",
-                    "UHC": "HT1",
-                    "Crystal": "HT1",
-                    "NethPot": "LT1",
-                    "SMP": "LT2",
-                    "CPVP": "HT1",
-                    "Mace": "LT2"
-                }
-            },
-            {
-                "username": "ItzRealMe",
-                "skin": "https://mc-heads.net/avatar/ItzRealMe/100",
-                "title": "Combat Master",
-                "points": 332,
-                "region": "NA",
-                "tiers": {
-                    "Sword": "HT1",
-                    "Axe": "HT1",
-                    "PotPvP": "HT1",
-                    "UHC": "HT1",
-                    "Crystal": "HT2",
-                    "NethPot": "LT2",
-                    "SMP": "LT2",
-                    "CPVP": "HT2",
-                    "Mace": "HT3"
-                }
-            },
-            {
-                "username": "Slight",
-                "skin": "https://mc-heads.net/avatar/Slight/100",
-                "title": "Combat Master",
-                "points": 300,
-                "region": "NA",
-                "tiers": {
-                    "Sword": "LT1",
-                    "Axe": "HT1",
-                    "PotPvP": "LT1",
-                    "UHC": "HT3",
-                    "Crystal": "LT3",
-                    "NethPot": "HT1",
-                    "SMP": "HT2",
-                    "CPVP": "LT1",
-                    "Mace": "HT4"
-                }
-            },
-            {
-                "username": "coldified",
-                "skin": "https://mc-heads.net/avatar/coldified/100",
-                "title": "Combat Ace",
-                "points": 222,
-                "region": "EU",
-                "tiers": {
-                    "Sword": "LT2",
-                    "Axe": "LT2",
-                    "PotPvP": "HT2",
-                    "UHC": "LT2",
-                    "Crystal": "HT1",
-                    "NethPot": "HT2",
-                    "SMP": "LT2",
-                    "CPVP": "HT3",
-                    "Mace": "LT3"
-                }
-            }
-        ]; 
+        let allPlayers = []; // This will now store data fetched from data.json
 
         let currentView = 'Overall'; // Default view
 
@@ -311,12 +237,30 @@
         }
 
         /**
-         * Initializes the rankings display.
-         * This function is called on page load since data is now embedded.
+         * Fetches player ranking data from data.json.
+         * Handles loading indicator and error messages.
          */
-        function initializeRankings() {
-            loadingIndicator.classList.add('hidden'); // Hide loading indicator as data is ready
-            displayRankings(); // Initial display
+        async function fetchRankings() {
+            loadingIndicator.classList.remove('hidden');
+            rankingsContainer.innerHTML = '';
+            noResults.classList.add('hidden');
+
+            try {
+                // Fetch data from data.json
+                const response = await fetch('data.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                allPlayers = await response.json();
+                
+                displayRankings(); // Initial display after fetching
+            } catch (error) {
+                console.error("Could not fetch player rankings:", error);
+                noResults.classList.remove('hidden');
+                noResults.textContent = 'Failed to load player data. Please ensure data.json is available and correctly formatted.';
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
         }
 
         /**
@@ -434,8 +378,8 @@
             });
         });
 
-        // Initialize rankings when the page loads
-        window.onload = initializeRankings;
+        // Fetch rankings when the page loads
+        window.onload = fetchRankings;
     </script>
 </body>
 </html>
