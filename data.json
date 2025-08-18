@@ -1,0 +1,66 @@
+[
+  {
+    "username": "Marlowww",
+    "skin": "https://mc-heads.net/avatar/Marlowww/100",
+    "title": "Combat Grandmaster",
+    "points": 405,
+    "region": "NA",
+    "tiers": {
+      "Sword": "HT1",
+      "Axe": "HT1",
+      "PotPvP": "LT1",
+      "UHC": "HT1",
+      "Crystal": "HT1",
+      "NethPot": "LT1",
+      "SMP": "LT2"
+    }
+  },
+  {
+    "username": "ItzRealMe",
+    "skin": "https://mc-heads.net/avatar/ItzRealMe/100",
+    "title": "Combat Master",
+    "points": 332,
+    "region": "NA",
+    "tiers": {
+      "Sword": "HT1",
+      "Axe": "HT1",
+      "PotPvP": "HT1",
+      "UHC": "HT1",
+      "Crystal": "HT2",
+      "NethPot": "LT2",
+      "SMP": "LT2"
+    }
+  },
+  {
+    "username": "Slight",
+    "skin": "https://mc-heads.net/avatar/Slight/100",
+    "title": "Combat Master",
+    "points": 300,
+    "region": "NA",
+    "tiers": {
+      "Sword": "LT1",
+      "Axe": "HT1",
+      "PotPvP": "LT1",
+      "UHC": "HT3",
+      "Crystal": "LT3",
+      "NethPot": "HT1",
+      "SMP": "HT2"
+    }
+  },
+  {
+    "username": "coldified",
+    "skin": "https://mc-heads.net/avatar/coldified/100",
+    "title": "Combat Ace",
+    "points": 222,
+    "region": "EU",
+    "tiers": {
+      "Sword": "LT2",
+      "Axe": "LT2",
+      "PotPvP": "HT2",
+      "UHC": "LT2",
+      "Crystal": "HT1",
+      "NethPot": "HT2",
+      "SMP": "LT2"
+    }
+  }
+]
