@@ -1,24 +1,24 @@
 {
-    "players": [
-        {"username": "_648k", "gamemode": "Sword", "tier": "HT1"},
-        {"username": "PvPGod", "gamemode": "Crystal", "tier": "LT1"},
-        {"username": "BlockMaster", "gamemode": "Axe", "tier": "HT2"},
-        {"username": "RedstoneHero", "gamemode": "PotPvP", "tier": "LT2"},
-        {"username": "BuilderPro", "gamemode": "UHC", "tier": "HT3"},
-        {"username": "CreeperHunter", "gamemode": "SMP", "tier": "LT3"},
-        {"username": "PixelArtist", "gamemode": "NethPot", "tier": "HT4"},
-        {"username": "Survivalist", "gamemode": "Sword", "tier": "LT4"},
-        {"username": "FarmKing", "gamemode": "Axe", "tier": "HT5"},
-        {"username": "SpeedRunner", "gamemode": "Crystal", "tier": "LT5"},
-        {"username": "MineLord", "gamemode": "Sword", "tier": "HT1"},
-        {"username": "GamerGirl", "gamemode": "PotPvP", "tier": "LT1"},
-        {"username": "TheLegend27", "gamemode": "UHC", "tier": "HT2"},
-        {"username": "NoobSlayer", "gamemode": "NethPot", "tier": "LT2"},
-        {"username": "DiamondMiner", "gamemode": "SMP", "tier": "HT3"},
-        {"username": "CraftyCat", "gamemode": "Sword", "tier": "LT3"},
-        {"username": "NetherTraveler", "gamemode": "Crystal", "tier": "HT4"},
-        {"username": "EnchanterX", "gamemode": "Axe", "tier": "LT4"},
-        {"username": "PvPKing", "gamemode": "PotPvP", "tier": "HT5"},
-        {"username": "ExplorerSteve", "gamemode": "UHC", "tier": "LT5"}
-    ]
+  "rankings": [
+    {
+      "username": "_648k",
+      "gamemode": "Sword",
+      "tier": "HT1"
+    },
+    {
+      "username": "Marlowww",
+      "gamemode": "Axe",
+      "tier": "LT1"
+    },
+    {
+      "username": "ItzRealMe",
+      "gamemode": "PotPvP",
+      "tier": "HT2"
+    },
+    {
+      "username": "DrDonutt",
+      "gamemode": "Sword",
+      "tier": "HT3"
+    }
+  ]
 }
