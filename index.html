@@ -20,8 +20,8 @@
             --mocha-gold: #f9e2af;
             --mocha-pink: #f4b8e4;
             --mocha-red: #f2cdcd;
-            --mocha-lavender: #b7b7ff; /* A slightly more vibrant lavender for contrast */
-            --mocha-dark-text: #4c526f; /* A darker text color for some elements */
+            --mocha-lavender: #b7b7ff;
+            --mocha-dark-text: #4c526f;
         }
 
         body {
@@ -38,37 +38,37 @@
 
         .card {
             background-color: var(--mocha-crust);
-            border-radius: 1.5rem; /* More rounded corners */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Deeper shadow */
-            padding: 2.5rem; /* More padding */
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 2.5rem;
             transition: transform 0.3s ease;
         }
         .card:hover {
-            transform: translateY(-5px); /* Subtle hover lift */
+            transform: translateY(-5px);
         }
 
         input[type="text"], select {
             background-color: var(--mocha-surface);
             border: 1px solid var(--mocha-border);
             color: var(--mocha-text);
-            border-radius: 0.75rem; /* More rounded input fields */
+            border-radius: 0.75rem;
             padding: 0.75rem 1.25rem;
             transition: border-color 0.2s, background-color 0.2s;
-            appearance: none; /* Removes default select arrow */
+            appearance: none;
         }
         input[type="text"]:focus, select:focus {
             outline: none;
             border-color: var(--mocha-blue);
-            box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2); /* Blue glow on focus */
+            box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2);
         }
 
         .table-header {
             background-color: var(--mocha-surface);
             color: var(--mocha-subtext);
             font-weight: 700;
-            padding: 1rem 1.5rem; /* More padding */
-            border-radius: 0.75rem; /* Consistent border radius */
-            letter-spacing: 0.05em; /* Add some letter spacing */
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            letter-spacing: 0.05em;
         }
         
         .table-row {
@@ -77,46 +77,44 @@
             transition: background-color 0.2s ease, transform 0.2s ease;
         }
         .table-row:last-child {
-            border-bottom: none; /* No border on the last row */
+            border-bottom: none;
         }
         .table-row:nth-child(even) {
             background-color: #2b2b40;
         }
         .table-row:hover {
             background-color: #313244;
-            transform: scale(1.01); /* Subtle row zoom effect */
+            transform: scale(1.01);
         }
 
         .table-row td {
-            padding: 1rem 1.5rem; /* More padding for cells */
+            padding: 1rem 1.5rem;
         }
 
-        /* Tier Colors with better contrast */
         .tier-ht1 { color: var(--mocha-gold); text-shadow: 0 0 5px rgba(249, 226, 175, 0.4); }
-        .tier-lt1 { color: #f2e7c4; } /* Slightly less saturated gold */
+        .tier-lt1 { color: #f2e7c4; }
         .tier-ht2 { color: var(--mocha-green); text-shadow: 0 0 5px rgba(166, 218, 149, 0.4); }
-        .tier-lt2 { color: #b7e3a9; } /* Slightly less saturated green */
+        .tier-lt2 { color: #b7e3a9; }
         .tier-ht3 { color: var(--mocha-pink); text-shadow: 0 0 5px rgba(244, 184, 228, 0.4); }
         .tier-lt3 { color: #ebacdb; }
         .tier-ht4 { color: var(--mocha-red); text-shadow: 0 0 5px rgba(242, 205, 205, 0.4); }
         .tier-lt4 { color: #e8c0c0; }
         .tier-ht5 { color: var(--mocha-lavender); text-shadow: 0 0 5px rgba(183, 183, 255, 0.4); }
-        .tier-lt5 { color: #c4c4e7; } /* Less saturated lavender */
+        .tier-lt5 { color: #c4c4e7; }
 
         .loading-spinner {
             border: 4px solid var(--mocha-border);
             border-top: 4px solid var(--mocha-blue);
             border-radius: 50%;
-            width: 50px; /* Slightly larger spinner */
+            width: 50px;
             height: 50px;
-            animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite; /* More dynamic animation curve */
+            animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* Custom scrollbar for a polished look */
         ::-webkit-scrollbar {
             width: 12px;
         }
@@ -203,7 +201,7 @@
         const playerTableContainer = document.getElementById('playerTableContainer');
         const noResults = document.getElementById('noResults');
 
-        let allPlayers = [];
+        let allRankings = []; // Store the fetched data, now with multiple rankings per player
 
         function getTierClass(tier) {
             switch(tier) {
@@ -221,76 +219,83 @@
             }
         }
 
-        async function fetchPlayerTiers() {
+        async function fetchPlayerRankings() {
             loadingIndicator.classList.remove('hidden');
             playerTableContainer.classList.add('hidden');
             noResults.classList.add('hidden');
 
             try {
-                const response = await fetch('tiers.json');
+                // Fetch from a new data source that has multiple entries per player
+                const response = await fetch('tiers_multi.json');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                allPlayers = data.players;
-                displayPlayers();
+                allRankings = data.rankings; // Store fetched data
+                displayRankings(); // Initial display
             } catch (error) {
-                console.error("Could not fetch player tiers:", error);
+                console.error("Could not fetch player rankings:", error);
                 noResults.classList.remove('hidden');
-                noResults.textContent = 'Failed to load player data. Please ensure tiers.json is available.';
+                noResults.textContent = 'Failed to load player data. Please ensure tiers_multi.json is available.';
                 playerTableContainer.classList.remove('hidden');
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
         }
 
-        function displayPlayers() {
+        function displayRankings() {
             playerTableBody.innerHTML = '';
             noResults.classList.add('hidden');
-            noResults.textContent = 'No players found matching your criteria.';
+            noResults.textContent = 'No rankings found matching your criteria.';
 
             const searchTerm = searchInput.value.toLowerCase();
             const selectedGamemode = gamemodeFilter.value;
             const selectedTier = tierFilter.value;
 
-            let filteredPlayers = allPlayers.filter(player => {
-                const matchesSearch = player.username.toLowerCase().includes(searchTerm);
-                const matchesGamemode = selectedGamemode === '' || player.gamemode === selectedGamemode;
-                const matchesTier = selectedTier === '' || player.tier === selectedTier;
+            let filteredRankings = allRankings.filter(ranking => {
+                const matchesSearch = ranking.username.toLowerCase().includes(searchTerm);
+                const matchesGamemode = selectedGamemode === '' || ranking.gamemode === selectedGamemode;
+                const matchesTier = selectedTier === '' || ranking.tier === selectedTier;
                 return matchesSearch && matchesGamemode && matchesTier;
             });
 
+            // Sort rankings by tier and then by gamemode to keep a consistent look
             const tierOrder = ['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5'];
-            filteredPlayers.sort((a, b) => tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier));
+            filteredRankings.sort((a, b) => {
+                const tierAIndex = tierOrder.indexOf(a.tier);
+                const tierBIndex = tierOrder.indexOf(b.tier);
+                if (tierAIndex !== tierBIndex) {
+                    return tierAIndex - tierBIndex;
+                }
+                return a.username.localeCompare(b.username);
+            });
 
-            const playersToDisplay = filteredPlayers.slice(0, 100);
-
-            if (playersToDisplay.length === 0) {
+            if (filteredRankings.length === 0) {
                 noResults.classList.remove('hidden');
                 return;
             }
 
-            // Show the table once data is ready
             playerTableContainer.classList.remove('hidden');
 
-            playersToDisplay.forEach((player, index) => {
+            // This ensures the rank is a simple index number in this view
+            filteredRankings.forEach((ranking, index) => {
                 const row = document.createElement('tr');
                 row.classList.add('table-row');
                 row.innerHTML = `
                     <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-300">${index + 1}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm font-semibold text-white">${player.username}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-400">${player.gamemode}</td>
-                    <td class="px-6 py-3 whitespace-nowrap text-lg font-extrabold ${getTierClass(player.tier)}">${player.tier}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm font-semibold text-white">${ranking.username}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-400">${ranking.gamemode}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-lg font-extrabold ${getTierClass(ranking.tier)}">${ranking.tier}</td>
                 `;
                 playerTableBody.appendChild(row);
             });
         }
 
-        searchInput.addEventListener('input', displayPlayers);
-        gamemodeFilter.addEventListener('change', displayPlayers);
-        tierFilter.addEventListener('change', displayPlayers);
+        searchInput.addEventListener('input', displayRankings);
+        gamemodeFilter.addEventListener('change', displayRankings);
+        tierFilter.addEventListener('change', displayRankings);
 
-        window.onload = fetchPlayerTiers;
+        window.onload = fetchPlayerRankings;
     </script>
 </body>
 </html>
