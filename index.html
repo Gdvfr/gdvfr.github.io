@@ -6,8 +6,10 @@
     <title>McTiers - Rankings by _648k</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2eDR0yD1n0J0jT/rP4KaxX762qLgq8B2qP80q5z8A05nC/z2g5K37+z33a==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2eDR0yD1n0J0jT/rP4KaxX762qLgq8B2qP80q5z8A05nC/z2g5K37+z33a==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* Catppuccin Macchiato palette for a consistent, calming dark theme */
         :root {
             --mocha-bg: #1e1e2e;
             --mocha-crust: #28283d;
@@ -28,6 +30,8 @@
             font-family: 'Inter', sans-serif;
             background-color: var(--mocha-bg);
             color: var(--mocha-text);
+            /* Smooth transitions for background and text color changes */
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -42,35 +46,58 @@
             background-color: var(--mocha-crust);
             border-radius: 1rem;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            /* Smooth transitions for hover effects */
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(-3px); /* Subtle lift effect on hover */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Enhanced shadow on hover */
         }
 
-        .tier-label {
-            background-color: var(--mocha-surface);
-            padding: 0.25rem 0.5rem;
+        .tab-button {
+            padding: 0.5rem 1rem;
             border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+        .tab-button:hover {
+            background-color: var(--mocha-surface); /* Darker on hover */
+        }
+        .tab-button.active {
+            background-color: var(--mocha-surface); /* Active tab color */
+            color: var(--mocha-blue); /* Active tab text color */
+        }
+
+        /* Styling for the small tier labels like HT1, LT2 */
+        .tier-label {
+            background-color: var(--mocha-surface); /* Darker background for tier labels */
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem; /* Slightly less rounded than card */
             font-size: 0.75rem;
             font-weight: 700;
             text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.1); /* Subtle border for definition */
+            white-space: nowrap; /* Prevents text from wrapping */
+            line-height: 1; /* Ensures single line height */
         }
 
+        /* Tier Colors with better contrast */
         .tier-ht1 { color: var(--mocha-gold); }
-        .tier-lt1 { color: #f2e7c4; }
+        .tier-lt1 { color: #f2e7c4; } /* Slightly less saturated gold */
         .tier-ht2 { color: var(--mocha-green); }
-        .tier-lt2 { color: #b7e3a9; }
+        .tier-lt2 { color: #b7e3a9; } /* Slightly less saturated green */
         .tier-ht3 { color: var(--mocha-pink); }
         .tier-lt3 { color: #ebacdb; }
         .tier-ht4 { color: var(--mocha-red); }
         .tier-lt4 { color: #e8c0c0; }
         .tier-ht5 { color: var(--mocha-lavender); }
-        .tier-lt5 { color: #c4c4e7; }
-        .tier-none { color: var(--mocha-dark-text); }
+        .tier-lt5 { color: #c4c4e7; } /* Less saturated lavender */
+        .tier-none { color: var(--mocha-dark-text); opacity: 0.6; } /* Faded for unknown tiers */
 
+        /* Loading spinner animation */
         .loading-spinner {
             border: 4px solid var(--mocha-border);
             border-top: 4px solid var(--mocha-blue);
@@ -84,7 +111,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Custom scrollbar */
+        /* Custom scrollbar for a polished look */
         ::-webkit-scrollbar {
             width: 12px;
         }
@@ -104,6 +131,7 @@
 </head>
 <body class="flex flex-col items-center min-h-screen">
     <div class="container mx-auto p-4 md:p-8">
+        <!-- Header Section -->
         <header class="flex justify-between items-center py-4 header-bg rounded-xl px-6 mb-8 shadow-lg">
             <h1 class="text-3xl md:text-4xl font-extrabold text-white">McTiers</h1>
             <div class="flex items-center space-x-4">
@@ -113,17 +141,20 @@
             </div>
         </header>
 
+        <!-- Gamemode Tab Navigation -->
         <div class="flex flex-col md:flex-row md:justify-between items-center bg-gray-900 rounded-xl p-4 md:p-6 mb-8 text-sm md:text-base shadow-lg">
-            <div class="flex flex-wrap gap-4 text-gray-400">
-                <button class="bg-gray-800 text-white font-bold py-2 px-4 rounded-lg focus:outline-none">Overall</button>
-                <button class="hover:bg-gray-800 py-2 px-4 rounded-lg transition-colors">LTMs</button>
-                <button class="hover:bg-gray-800 py-2 px-4 rounded-lg transition-colors">Vanilla</button>
-                <button class="hover:bg-gray-800 py-2 px-4 rounded-lg transition-colors">UHC</button>
-                <button class="hover:bg-gray-800 py-2 px-4 rounded-lg transition-colors">Pot</button>
-                <button class="hover:bg-gray-800 py-2 px-4 rounded-lg transition-colors">NethPot</button>
-                <button class="hover:bg-gray-800 py-2 px-4 rounded-lg transition-colors">SMP</button>
-                <button class="hover:bg-gray-800 py-2 px-4 rounded-lg transition-colors">Sword</button>
-                <button class="hover:bg-gray-800 py-2 px-4 rounded-lg transition-colors">Axe</button>
+            <div class="flex flex-wrap gap-2 md:gap-4 text-gray-400">
+                <button class="tab-button active" data-gamemode="Overall">Overall</button>
+                <button class="tab-button" data-gamemode="LTMs">LTMs</button>
+                <button class="tab-button" data-gamemode="Vanilla">Vanilla</button>
+                <button class="tab-button" data-gamemode="UHC">UHC</button>
+                <button class="tab-button" data-gamemode="PotPvP">Pot</button>
+                <button class="tab-button" data-gamemode="NethPot">NethPot</button>
+                <button class="tab-button" data-gamemode="SMP">SMP</button>
+                <button class="tab-button" data-gamemode="Sword">Sword</button>
+                <button class="tab-button" data-gamemode="Axe">Axe</button>
+                <button class="tab-button" data-gamemode="CPVP">CPVP</button>
+                <button class="tab-button" data-gamemode="Mace">Mace</button>
             </div>
             <div class="hidden md:flex flex-row space-x-4 mt-4 md:mt-0 items-center justify-end w-full md:w-auto text-gray-400">
                 <p>SERVER: <span class="font-bold text-white">mc.pvp.club</span></p>
@@ -131,41 +162,40 @@
             </div>
         </div>
 
-        <div class="flex items-center space-x-2 md:space-x-4 px-4 md:px-8 mb-4 md:mb-6">
-            <div class="w-12 md:w-16"></div> <div class="w-16 md:w-20"></div> <div class="flex-1 min-w-0"></div> <div class="w-16 md:w-24 text-center"></div> <div class="flex-shrink-0 flex items-center justify-start space-x-2 md:space-x-4">
-                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full flex items-center justify-center bg-purple-500 text-white text-xs md:text-sm">
-                    <i class="fa-solid fa-wand-magic-sparkles" title="Sword"></i>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full flex items-center justify-center bg-red-500 text-white text-xs md:text-sm">
-                    <i class="fa-solid fa-shield-halved" title="Axe"></i>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full flex items-center justify-center bg-blue-500 text-white text-xs md:text-sm">
-                    <i class="fa-solid fa-flask" title="PotPvP"></i>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full flex items-center justify-center bg-green-500 text-white text-xs md:text-sm">
-                    <i class="fa-solid fa-gem" title="UHC"></i>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full flex items-center justify-center bg-yellow-500 text-white text-xs md:text-sm">
-                    <i class="fa-solid fa-hand-fist" title="Crystal"></i>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full flex items-center justify-center bg-pink-500 text-white text-xs md:text-sm">
-                    <i class="fa-solid fa-fire" title="NethPot"></i>
-                </div>
-                <div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full flex items-center justify-center bg-orange-500 text-white text-xs md:text-sm">
-                    <i class="fa-solid fa-tree" title="SMP"></i>
-                </div>
+        <!-- Gamemode icons row (Header for tier columns) -->
+        <div class="flex items-center gap-2 md:gap-4 px-4 md:px-6 mb-4 md:mb-6 text-gray-400">
+            <!-- Placeholders for Rank, Skin, Username, Region to align icons correctly -->
+            <div class="w-12 md:w-16 flex-shrink-0"></div>
+            <div class="w-16 md:w-20 flex-shrink-0"></div>
+            <div class="flex-1 min-w-0"></div>
+            <div class="w-16 md:w-24 text-center"></div>
+            
+            <div class="flex-shrink-0 flex items-center justify-start space-x-2 md:space-x-4">
+                <!-- Gamemode Icons (without circular backgrounds) -->
+                <i class="fa-solid fa-wand-magic-sparkles text-2xl md:text-3xl" title="Sword"></i>
+                <i class="fa-solid fa-axe-battle text-2xl md:text-3xl" title="Axe"></i>
+                <i class="fa-solid fa-flask text-2xl md:text-3xl" title="PotPvP"></i>
+                <i class="fa-solid fa-heart-pulse text-2xl md:text-3xl" title="UHC"></i>
+                <i class="fa-solid fa-gem text-2xl md:text-3xl" title="CPVP"></i>
+                <i class="fa-solid fa-fire-flame-curved text-2xl md:text-3xl" title="NethPot"></i>
+                <i class="fa-solid fa-tree text-2xl md:text-3xl" title="SMP"></i>
+                <i class="fa-solid fa-hammer text-2xl md:text-3xl" title="Mace"></i>
             </div>
         </div>
         
+        <!-- Loading Indicator -->
         <div id="loadingIndicator" class="flex flex-col justify-center items-center py-12">
             <div class="loading-spinner"></div>
             <p class="mt-4 text-gray-400 text-lg animate-pulse">Loading ranks...</p>
         </div>
 
+        <!-- Rankings Container (Player Cards) -->
         <div id="rankings-container" class="space-y-4">
-            </div>
+            <!-- Player cards will be injected here by JavaScript -->
+        </div>
         
-        <p id="noResults" class="text-center text-red-400 py-12 hidden text-lg">No players found matching your criteria.</p>
+        <!-- No Results Message -->
+        <p id="noResults" class="text-center text-red-400 py-12 hidden text-lg font-bold">No players found matching your criteria.</p>
     </div>
 
     <script>
@@ -173,11 +203,97 @@
         const rankingsContainer = document.getElementById('rankings-container');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const noResults = document.getElementById('noResults');
+        const tabButtons = document.querySelectorAll('.tab-button');
 
-        let allPlayers = [];
+        // Embedded sample data to resolve the fetch error
+        let allPlayers = [
+            {
+                "username": "Marlowww",
+                "skin": "https://mc-heads.net/avatar/Marlowww/100",
+                "title": "Combat Grandmaster",
+                "points": 405,
+                "region": "NA",
+                "tiers": {
+                    "Sword": "HT1",
+                    "Axe": "HT1",
+                    "PotPvP": "LT1",
+                    "UHC": "HT1",
+                    "Crystal": "HT1",
+                    "NethPot": "LT1",
+                    "SMP": "LT2",
+                    "CPVP": "HT1",
+                    "Mace": "LT2"
+                }
+            },
+            {
+                "username": "ItzRealMe",
+                "skin": "https://mc-heads.net/avatar/ItzRealMe/100",
+                "title": "Combat Master",
+                "points": 332,
+                "region": "NA",
+                "tiers": {
+                    "Sword": "HT1",
+                    "Axe": "HT1",
+                    "PotPvP": "HT1",
+                    "UHC": "HT1",
+                    "Crystal": "HT2",
+                    "NethPot": "LT2",
+                    "SMP": "LT2",
+                    "CPVP": "HT2",
+                    "Mace": "HT3"
+                }
+            },
+            {
+                "username": "Slight",
+                "skin": "https://mc-heads.net/avatar/Slight/100",
+                "title": "Combat Master",
+                "points": 300,
+                "region": "NA",
+                "tiers": {
+                    "Sword": "LT1",
+                    "Axe": "HT1",
+                    "PotPvP": "LT1",
+                    "UHC": "HT3",
+                    "Crystal": "LT3",
+                    "NethPot": "HT1",
+                    "SMP": "HT2",
+                    "CPVP": "LT1",
+                    "Mace": "HT4"
+                }
+            },
+            {
+                "username": "coldified",
+                "skin": "https://mc-heads.net/avatar/coldified/100",
+                "title": "Combat Ace",
+                "points": 222,
+                "region": "EU",
+                "tiers": {
+                    "Sword": "LT2",
+                    "Axe": "LT2",
+                    "PotPvP": "HT2",
+                    "UHC": "LT2",
+                    "Crystal": "HT1",
+                    "NethPot": "HT2",
+                    "SMP": "LT2",
+                    "CPVP": "HT3",
+                    "Mace": "LT3"
+                }
+            }
+        ]; 
 
-        const gamemodeOrder = ["Sword", "Axe", "PotPvP", "UHC", "Crystal", "NethPot", "SMP"];
+        let currentView = 'Overall'; // Default view
 
+        // Define the order of gamemodes for consistent display of tier labels
+        const gamemodeDisplayOrder = ["Sword", "Axe", "PotPvP", "UHC", "CPVP", "NethPot", "SMP", "Mace"];
+
+        // Define the order of tiers for sorting
+        const tierOrder = ['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5'];
+
+        /**
+         * Returns the CSS class for a given tier.
+         * @param {string} tier - The tier string (e.g., 'HT1', 'LT5').
+         * @returns {string} The corresponding CSS class.
+         */
         function getTierClass(tier) {
             switch(tier) {
                 case 'HT1': return 'tier-ht1';
@@ -190,64 +306,86 @@
                 case 'LT4': return 'tier-lt4';
                 case 'HT5': return 'tier-ht5';
                 case 'LT5': return 'tier-lt5';
-                default: return 'tier-none';
+                default: return 'tier-none'; // For unknown or non-ranked tiers
             }
         }
 
-        async function fetchRankings() {
-            loadingIndicator.classList.remove('hidden');
-            rankingsContainer.innerHTML = '';
-            noResults.classList.add('hidden');
-
-            try {
-                const response = await fetch('data.json');
-                if (!response.ok) throw new Error('Failed to fetch data.');
-                allPlayers = await response.json();
-                
-                // Sort players by points in descending order
-                allPlayers.sort((a, b) => b.points - a.points);
-                
-                displayRankings();
-            } catch (error) {
-                console.error("Could not fetch player rankings:", error);
-                noResults.classList.remove('hidden');
-                noResults.textContent = 'Failed to load player data. Please ensure data.json is available.';
-            } finally {
-                loadingIndicator.classList.add('hidden');
-            }
+        /**
+         * Initializes the rankings display.
+         * This function is called on page load since data is now embedded.
+         */
+        function initializeRankings() {
+            loadingIndicator.classList.add('hidden'); // Hide loading indicator as data is ready
+            displayRankings(); // Initial display
         }
 
+        /**
+         * Filters, sorts, and displays player rankings based on current view and search term.
+         */
         function displayRankings() {
-            rankingsContainer.innerHTML = '';
-            noResults.classList.add('hidden');
+            rankingsContainer.innerHTML = ''; // Clear existing content
+            noResults.classList.add('hidden'); // Hide no results message initially
 
             const searchTerm = searchInput.value.toLowerCase();
             let filteredPlayers = allPlayers.filter(player => player.username.toLowerCase().includes(searchTerm));
+
+            if (currentView === 'Overall') {
+                // For 'Overall' view, sort by points (descending)
+                filteredPlayers.sort((a, b) => b.points - a.points);
+            } else {
+                // For specific gamemode views, filter players who have a tier in that gamemode
+                filteredPlayers = filteredPlayers.filter(player => player.tiers && player.tiers[currentView]);
+
+                // Sort by tier in the selected gamemode
+                filteredPlayers.sort((a, b) => {
+                    const tierAIndex = tierOrder.indexOf(a.tiers[currentView]);
+                    const tierBIndex = tierOrder.indexOf(b.tiers[currentView]);
+                    // If tiers are the same, sort by username for consistent order
+                    if (tierAIndex === tierBIndex) {
+                        return a.username.localeCompare(b.username);
+                    }
+                    return tierAIndex - tierBIndex;
+                });
+            }
 
             if (filteredPlayers.length === 0) {
                 noResults.classList.remove('hidden');
                 return;
             }
 
-            let lastPoints = null;
+            // Iterate through filtered and sorted players to create their cards
+            let lastPointsOrTier = null;
             let currentRank = 1;
-            let tiedRank = 1;
+            let tiedRankBase = 1;
 
             filteredPlayers.forEach((player, index) => {
-                if (lastPoints !== null && player.points < lastPoints) {
-                    currentRank = index + 1;
-                    tiedRank = currentRank;
-                } else if (lastPoints !== null && player.points === lastPoints) {
-                    currentRank = tiedRank;
+                let displayRank = '';
+                let currentComparisonValue;
+
+                if (currentView === 'Overall') {
+                    currentComparisonValue = player.points;
                 } else {
-                    currentRank = index + 1;
-                    tiedRank = currentRank;
+                    currentComparisonValue = player.tiers[currentView];
                 }
 
-                lastPoints = player.points;
+                // Logic for assigning ranks, handling ties
+                if (index > 0) {
+                    if (currentComparisonValue !== lastPointsOrTier) {
+                        currentRank = index + 1;
+                        tiedRankBase = currentRank;
+                    } else {
+                        currentRank = tiedRankBase;
+                    }
+                } else {
+                    currentRank = 1;
+                    tiedRankBase = 1;
+                }
+                displayRank = currentRank;
+                lastPointsOrTier = currentComparisonValue;
 
-                const tiersHtml = gamemodeOrder.map(gamemode => {
-                    const tier = player.tiers[gamemode] || '-';
+                // Generate HTML for each gamemode's tier label
+                const tiersHtml = gamemodeDisplayOrder.map(gamemode => {
+                    const tier = player.tiers[gamemode] || '-'; // Use '-' if tier is not available
                     const tierClass = getTierClass(tier);
                     return `<div class="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center">
                                 <span class="tier-label ${tierClass} text-center">${tier}</span>
@@ -257,8 +395,8 @@
                 const playerCard = document.createElement('div');
                 playerCard.classList.add('card', 'p-4', 'md:p-6', 'flex', 'items-center', 'space-x-4');
                 playerCard.innerHTML = `
-                    <div class="w-12 md:w-16 flex-shrink-0 text-3xl font-bold text-center text-white">
-                        <p>${currentRank}.</p>
+                    <div class="w-12 md:w-16 flex-shrink-0 text-2xl md:text-3xl font-bold text-center text-white">
+                        <p>${displayRank}.</p>
                     </div>
                     <div class="w-16 md:w-20 flex-shrink-0">
                         <img src="${player.skin}" alt="${player.username}'s skin" class="rounded-lg w-full">
@@ -280,8 +418,24 @@
             });
         }
 
+        // Event listener for search input
         searchInput.addEventListener('input', displayRankings);
-        window.onload = fetchRankings;
+
+        // Event listeners for tab buttons
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove 'active' class from all buttons
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                // Add 'active' class to the clicked button
+                button.classList.add('active');
+                
+                currentView = button.dataset.gamemode; // Update the current view
+                displayRankings(); // Re-display rankings based on the new view
+            });
+        });
+
+        // Initialize rankings when the page loads
+        window.onload = initializeRankings;
     </script>
 </body>
 </html>
