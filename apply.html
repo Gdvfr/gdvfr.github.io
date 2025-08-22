@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Staff Application - Your Server Name</title>
+    <!-- Tailwind CSS CDN for modern, responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter for a clean, professional look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Gradient background inspired by gaming aesthetics */
+            background: linear-gradient(135deg, #1f1c2c 0%, #302b63 100%);
+            color: #e0e7ff; /* Light, slightly blue-tinted text */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem; /* Padding for mobile devices */
+        }
+        .application-container {
+            background-color: #282a3a; /* Darker, slightly desaturated background for the main card */
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5); /* Stronger, deeper shadow */
+            max-width: 700px;
+            width: 100%;
+            padding: 2.5rem;
+            border: 1px solid #4f46e5; /* Subtle purple-blue border */
+        }
+        .form-input {
+            background-color: #3b3d54; /* Darker input background */
+            border: 1px solid #5d5f7d; /* Input border color */
+            color: #e0e7ff;
+            border-radius: 0.75rem; /* Slightly more rounded inputs */
+            padding: 1rem 1.25rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #818cf8; /* Light blue-purple on focus */
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.5); /* Glowing effect */
+        }
+        .submit-button {
+            background-image: linear-gradient(45deg, #6d28d9 0%, #4f46e5 100%); /* Purple to blue gradient */
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            border: none;
+        }
+        .submit-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5);
+        }
+        .submit-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .message-success {
+            color: #84cc16; /* Green for success */
+        }
+        .message-error {
+            color: #ef4444; /* Red for error */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #282a3a;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6d28d9;
+        }
+    </style>
+</head>
+<body>
+    <div class="application-container">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-center text-purple-400 mb-6 drop-shadow-lg">
+            Staff Application
+        </h1>
+        <p class="text-lg text-gray-300 text-center mb-10">
+            Join our team and help make our Minecraft server awesome!
+        </p>
+
+        <form id="staffApplicationForm" class="space-y-6">
+            <div>
+                <label for="mcUsername" class="block text-gray-200 text-lg font-semibold mb-2">Minecraft Username:</label>
+                <input type="text" id="mcUsername" name="mcUsername" placeholder="Your Minecraft name" required
+                       class="form-input w-full">
+            </div>
+
+            <div>
+                <label for="discordUsername" class="block text-gray-200 text-lg font-semibold mb-2">Discord Username (e.g., YourName#1234 or @YourName):</label>
+                <input type="text" id="discordUsername" name="discordUsername" placeholder="Your Discord handle" required
+                       class="form-input w-full">
+            </div>
+
+            <div>
+                <label for="age" class="block text-gray-200 text-lg font-semibold mb-2">Age:</label>
+                <input type="number" id="age" name="age" placeholder="Your age" min="13" required
+                       class="form-input w-full">
+            </div>
+
+            <!-- Additional Questions - feel free to add more! -->
+            <div>
+                <label for="experience" class="block text-gray-200 text-lg font-semibold mb-2">Relevant Experience (e.g., previous staff roles, moderation skills, time played):</label>
+                <textarea id="experience" name="experience" rows="5" placeholder="Tell us about your experience..." required
+                          class="form-input w-full resize-y"></textarea>
+            </div>
+
+            <div>
+                <label for="whyApply" class="block text-gray-200 text-lg font-semibold mb-2">Why do you want to be staff on our server?</label>
+                <textarea id="whyApply" name="whyApply" rows="5" placeholder="Explain your motivation..." required
+                          class="form-input w-full resize-y"></textarea>
+            </div>
+
+            <div class="text-center mt-8">
+                <button type="submit" class="submit-button">
+                    Submit Application
+                </button>
+            </div>
+            <p id="formMessage" class="text-center text-lg mt-4 hidden"></p>
+        </form>
+    </div>
+
+    <script>
+        // !! IMPORTANT: Replace this with your actual Discord Webhook URL !!
+        // You can create a webhook in your Discord server's channel settings.
+        const DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE'; 
+
+        const form = document.getElementById('staffApplicationForm');
+        const formMessage = document.getElementById('formMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            formMessage.classList.add('hidden'); // Hide previous messages
+
+            if (DISCORD_WEBHOOK_URL === 'YOUR_DISCORD_WEBHOOK_URL_HERE' || !DISCORD_WEBHOOK_URL) {
+                displayMessage('Error: Discord Webhook URL is not configured. Please update the JavaScript file.', 'error');
+                return;
+            }
+
+            // Collect form data
+            const mcUsername = document.getElementById('mcUsername').value.trim();
+            const discordUsername = document.getElementById('discordUsername').value.trim();
+            const age = document.getElementById('age').value.trim();
+            const experience = document.getElementById('experience').value.trim();
+            const whyApply = document.getElementById('whyApply').value.trim();
+
+            if (!mcUsername || !discordUsername || !age || !experience || !whyApply) {
+                displayMessage('Please fill out all required fields.', 'error');
+                return;
+            }
+
+            // Construct the Discord webhook payload
+            const payload = {
+                username: "Staff Application Bot",
+                avatar_url: "https://www.minecraft.net/content/dam/archive/profile/Minecraft_Circle_200.png", // Minecraft logo
+                embeds: [
+                    {
+                        title: "New Staff Application Received! 📝",
+                        description: `A new player has applied for a staff position on your server.`,
+                        color: 8206880, // Hex color for a nice purple-blue (5000DD in decimal)
+                        fields: [
+                            {
+                                name: "Minecraft Username",
+                                value: `\`${mcUsername}\``,
+                                inline: true
+                            },
+                            {
+                                name: "Discord Username",
+                                value: `\`${discordUsername}\``,
+                                inline: true
+                            },
+                            {
+                                name: "Age",
+                                value: `\`${age}\``,
+                                inline: true
+                            },
+                            {
+                                name: "Relevant Experience",
+                                value: `>>> ${experience}` // Discord markdown for block quote
+                            },
+                            {
+                                name: "Why Apply?",
+                                value: `>>> ${whyApply}`
+                            }
+                        ],
+                        timestamp: new Date().toISOString(), // Current time
+                        footer: {
+                            text: "Application submitted via the website"
+                        }
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (response.ok) {
+                    displayMessage('Application submitted successfully! We will review it shortly. ✨', 'success');
+                    form.reset(); // Clear the form
+                } else {
+                    const errorText = await response.text();
+                    displayMessage(`Failed to send application. Discord returned: ${response.status} ${response.statusText}. Error: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                console.error('Network or fetch error:', error);
+                displayMessage('An unexpected error occurred. Please try again later. 🚧', 'error');
+            }
+        });
+
+        function displayMessage(message, type) {
+            formMessage.textContent = message;
+            formMessage.classList.remove('hidden', 'message-success', 'message-error');
+            if (type === 'success') {
+                formMessage.classList.add('message-success');
+            } else {
+                formMessage.classList.add('message-error');
+            }
+        }
+    </script>
+</body>
+</html>
