@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWK Value List - Item Prices</title>
+    <!-- Tailwind CSS CDN for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter for a clean, modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* Deep dark background */
+            color: #e0e0e0; /* Light gray text */
+        }
+        .container {
+            max-width: 90%;
+            padding: 2rem;
+            border-radius: 1rem;
+            background-color: #16213e; /* Slightly lighter dark background for card */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6); /* Stronger, diffused shadow */
+        }
+        .item-card {
+            background-color: #0f3460; /* Darker blue background for individual items */
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer; /* Indicate it's clickable */
+        }
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+        }
+        .value-text {
+            color: #ffd700; /* Gold color for values */
+            font-weight: 700;
+        }
+        .stack-value {
+            color: #add8e6; /* Light blue for stack values */
+            font-size: 0.9em;
+        }
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #16213e; /* Same as container, but can be customized */
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8);
+            max-width: 500px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+        .modal-input {
+            background-color: #0f3460;
+            border: 1px solid #2e4a77;
+            color: #e0e0e0;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            text-align: center;
+        }
+        .modal-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .modal-button-primary {
+            background-color: #4CAF50; /* Green buy button */
+            color: white;
+        }
+        .modal-button-primary:hover {
+            background-color: #45a049;
+            transform: translateY(-1px);
+        }
+        .modal-button-secondary {
+            background-color: #f44336; /* Red cancel button */
+            color: white;
+        }
+        .modal-button-secondary:hover {
+            background-color: #da190b;
+            transform: translateY(-1px);
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 800px; /* Wider on desktop */
+                padding: 3rem;
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="container mx-auto text-center">
+        <h1 class="text-5xl font-extrabold mb-4 text-purple-400 drop-shadow-lg">SWK Value List</h1>
+        <p class="text-xl mb-10 text-gray-300">
+            Current estimated values for key items on the server.
+            <br>
+            Last Updated: August 22, 2025
+        </p>
+
+        <div id="itemList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Item cards will be dynamically loaded here by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Purchase Modal Structure -->
+    <div id="purchaseModal" class="modal-overlay">
+        <div class="modal-content text-center">
+            <h2 id="modalItemName" class="text-3xl font-bold mb-4 text-white"></h2>
+            <img id="modalItemImage" src="" alt="Item" class="w-24 h-24 mx-auto rounded-lg mb-4 object-cover">
+            <p class="text-lg text-gray-300 mb-2">Price per piece: <span id="modalPricePerPiece" class="value-text text-xl"></span></p>
+            <p id="modalStackInfo" class="text-sm text-gray-400 mb-4"></p>
+
+            <div class="mb-6">
+                <label for="quantity" class="block text-gray-300 text-lg font-semibold mb-2">Quantity:</label>
+                <input
+                    type="number"
+                    id="quantityInput"
+                    min="1"
+                    value="1"
+                    class="modal-input"
+                    oninput="updateTotalPrice()"
+                />
+            </div>
+
+            <p class="text-2xl mb-8">Total: <span id="modalTotalPrice" class="value-text text-3xl"></span></p>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="addToCartButton" class="modal-button modal-button-primary flex-grow">Purchase</button>
+                <button id="closeModalButton" class="modal-button modal-button-secondary flex-grow">Close</button>
+            </div>
+            <p id="purchaseMessage" class="text-yellow-300 mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <script>
+        // Data for your Minecraft items and their values
+        const minecraftItems = [
+            {
+                name: "Netherite Block",
+                valuePerPiece: 10800000, // 1.2M * 9 ingots = 10.8M
+                stackSize: 64,
+                image: "https://minecraft-heads.com/images/heads/items/netherite_block.png", // Netherite Block icon
+                description: "A compact block of the most valuable material."
+            },
+            {
+                name: "Gilded Blackstone",
+                valuePerPiece: 600000, // 600k
+                stackSize: 64,
+                image: "https://minecraft-heads.com/images/heads/blocks/gilded_blackstone.png", // Gilded Blackstone icon
+                description: "A rare and decorative block found in Bastions."
+            },
+            {
+                name: "Elytra",
+                valuePerPiece: 9000000, // 9 million
+                stackSize: 23, // Max 23 non-stackable as requested
+                image: "https://minecraft-heads.com/images/heads/items/elytra.png", // Elytra icon
+                description: "Allows flight and found in End Cities."
+            },
+            {
+                name: "Diamond Block",
+                valuePerPiece: 8100000, // 9 diamonds * ~900k = 8.1 million
+                stackSize: 64,
+                image: "https://minecraft-heads.com/images/heads/blocks/diamond_block.png", // Diamond Block icon
+                description: "A compact form of valuable diamonds."
+            },
+            {
+                name: "Ancient Debris",
+                valuePerPiece: 1000000, // 1 million (estimate)
+                stackSize: 64,
+                image: "https://minecraft-heads.com/images/heads/blocks/ancient_debris.png", // Ancient Debris icon
+                description: "Found in the Nether, precursor to Netherite."
+            }
+            // Add more items here following the same structure
+        ];
+
+        const itemListContainer = document.getElementById('itemList');
+        const purchaseModal = document.getElementById('purchaseModal');
+        const modalItemName = document.getElementById('modalItemName');
+        const modalItemImage = document.getElementById('modalItemImage');
+        const modalPricePerPiece = document.getElementById('modalPricePerPiece');
+        const modalStackInfo = document.getElementById('modalStackInfo');
+        const quantityInput = document.getElementById('quantityInput');
+        const modalTotalPrice = document.getElementById('modalTotalPrice');
+        const addToCartButton = document.getElementById('addToCartButton');
+        const closeModalButton = document.getElementById('closeModalButton');
+        const purchaseMessage = document.getElementById('purchaseMessage');
+
+        let currentSelectedItem = null; // Store the item currently in the modal
+
+        // Function to format numbers into a more readable currency string
+        function formatCurrency(amount) {
+            if (amount === 0) return '0';
+            const absAmount = Math.abs(amount);
+            if (absAmount >= 1000000) {
+                return (amount / 1000000).toFixed(1) + 'M';
+            } else if (absAmount >= 1000) {
+                return (amount / 1000).toFixed(0) + 'k';
+            }
+            return amount.toLocaleString();
+        }
+
+        // Opens the purchase modal with item details
+        function openPurchaseModal(item) {
+            currentSelectedItem = item;
+            modalItemName.textContent = item.name;
+            modalItemImage.src = item.image;
+            modalItemImage.alt = item.name;
+            modalPricePerPiece.textContent = formatCurrency(item.valuePerPiece);
+            
+            // Set max quantity based on item's stackSize, or 23 for non-stackable (Elytra example)
+            quantityInput.max = item.stackSize;
+            quantityInput.value = 1; // Default to 1
+            
+            if (item.stackSize > 1) {
+                modalStackInfo.textContent = `Stackable: Max ${item.stackSize} per slot`;
+            } else {
+                modalStackInfo.textContent = `Non-stackable: Max ${item.stackSize} per slot`; // Still show max per slot if non-stackable
+            }
+            
+            purchaseMessage.classList.add('hidden'); // Hide previous messages
+            updateTotalPrice(); // Calculate initial total
+            purchaseModal.classList.add('open');
+        }
+
+        // Closes the purchase modal
+        function closePurchaseModal() {
+            purchaseModal.classList.remove('open');
+            currentSelectedItem = null;
+            purchaseMessage.classList.add('hidden'); // Clear message on close
+        }
+
+        // Updates the total price in the modal based on quantity input
+        window.updateTotalPrice = function() { // Made global for oninput attribute
+            if (!currentSelectedItem) return;
+
+            let quantity = parseInt(quantityInput.value);
+            if (isNaN(quantity) || quantity < 1) {
+                quantity = 1;
+                quantityInput.value = 1;
+            }
+            // Ensure quantity does not exceed item's stackSize (or defined max)
+            if (quantity > currentSelectedItem.stackSize) {
+                quantity = currentSelectedItem.stackSize;
+                quantityInput.value = currentSelectedItem.stackSize;
+            }
+
+            const total = currentSelectedItem.valuePerPiece * quantity;
+            modalTotalPrice.textContent = formatCurrency(total);
+        }
+
+        // Handles the "Purchase" button click
+        addToCartButton.addEventListener('click', () => {
+            if (!currentSelectedItem) return;
+            const quantity = parseInt(quantityInput.value);
+            const totalCost = currentSelectedItem.valuePerPiece * quantity;
+            
+            // This is a simulation, as there's no backend for actual purchasing
+            purchaseMessage.textContent = `You "purchased" ${quantity}x ${currentSelectedItem.name} for a total of ${formatCurrency(totalCost)}! (This is a simulation, no actual transaction occurred)`;
+            purchaseMessage.classList.remove('hidden');
+        });
+
+        // Event listener for closing modal
+        closeModalButton.addEventListener('click', closePurchaseModal);
+
+        // Generate the item cards and append them to the list
+        minecraftItems.forEach(item => {
+            const card = document.createElement('div');
+            card.classList.add('item-card', 'flex', 'flex-col', 'items-center', 'text-center');
+            card.onclick = () => openPurchaseModal(item); // Add click handler to open modal
+
+            const valuePerStack = item.valuePerPiece * item.stackSize; // Calculate for a full stack display
+
+            card.innerHTML = `
+                <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-lg mb-4 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/64x64/cccccc/000000?text=Item';" />
+                <h3 class="text-2xl font-semibold mb-2 text-white">${item.name}</h3>
+                <p class="text-sm text-gray-400 mb-4">${item.description}</p>
+                <div class="mt-auto"> <!-- Push values to the bottom -->
+                    <p class="text-lg">1 piece: <span class="value-text">${formatCurrency(item.valuePerPiece)}</span></p>
+                    ${item.stackSize > 1 ? `<p class="stack-value text-base mt-1">1 stack (${item.stackSize}x): <span class="value-text">${formatCurrency(valuePerStack)}</span></p>` : ''}
+                </div>
+            `;
+            itemListContainer.appendChild(card);
+        });
+    </script>
+</body>
+</html>
