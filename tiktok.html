@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Video Feed</title>
+    <!-- Tailwind CSS CDN for responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - 'Inter' for a clean, modern, TikTok-like look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Pure black background */
+            color: #ffffff; /* White text */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Control scrolling via JavaScript/buttons */
+            touch-action: pan-y; /* Allow vertical swiping on touch devices */
+        }
+        .header {
+            background-color: #000000; /* Black header */
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1); /* Subtle white line bottom */
+            position: fixed; /* Fixed at top */
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+        .logo {
+            font-size: 1.6rem; /* TikTok-like logo size */
+            font-weight: 800;
+            color: #ffffff; /* White logo text */
+        }
+        .nav-link {
+            padding: 0.2rem 0.6rem; /* Smaller nav links */
+            border-radius: 0.25rem;
+            transition: background-color 0.1s ease-in-out;
+            font-weight: 600;
+            color: #cccccc; /* Light gray for nav links */
+            font-size: 0.9rem;
+        }
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .nav-link.active {
+            color: #ffffff;
+            font-weight: 700;
+            border-bottom: 2px solid #ffffff; /* Active tab indicator */
+            border-radius: 0; /* No border-radius for bottom line */
+        }
+
+        /* Main Video Feed Container */
+        .video-feed-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 100%;
+            height: 100vh; /* Take full viewport height */
+            margin-top: 56px; /* Offset for fixed header height */
+            padding-bottom: 0; /* No padding at bottom */
+        }
+
+        .video-wrapper {
+            width: 100%;
+            height: 100%;
+            max-width: 500px; /* Max width to simulate phone screen */
+            max-height: 100%; /* Take full height of container */
+            background-color: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .video-element {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Fill the wrapper, cropping if necessary */
+            background-color: #000;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Fill the wrapper */
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 1;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1;
+        }
+
+        .video-playing .video-thumbnail {
+            opacity: 0; /* Hide thumbnail when video plays */
+        }
+
+        /* Overlays for content and actions */
+        .content-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+            z-index: 5;
+            color: white;
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom)); /* Account for safe area on mobile */
+        }
+        .actions-overlay {
+            position: absolute;
+            bottom: 1rem;
+            right: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            z-index: 5;
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+        }
+        .action-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.1s;
+        }
+        .action-button i {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
+        }
+        .action-button:hover i {
+            color: #fe2c55; /* TikTok red hover for icons */
+        }
+        .action-button.liked i {
+            color: #fe2c55; /* TikTok red for liked heart */
+        }
+        .profile-pic-uploader {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            border: 2px solid white;
+            background-color: #333; /* Placeholder background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative; /* For the plus icon */
+        }
+        .profile-pic-uploader img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .add-profile-icon {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #fe2c55; /* TikTok red */
+            color: white;
+            border-radius: 50%;
+            width: 1.2rem;
+            height: 1.2rem;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid black;
+        }
+        .user-info .uploader-handle {
+            font-weight: 700;
+            color: white; /* White handle text */
+            font-size: 1.1rem;
+        }
+        .video-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .video-description {
+            font-size: 0.85rem;
+            color: #e0e0e0;
+            max-height: 3.5rem; /* Limit description height */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Limit to 3 lines */
+            -webkit-box-orient: vertical;
+        }
+
+        /* Navigation Arrows (subtle) */
+        .nav-arrow {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.1); /* Very subtle translucent white */
+            color: white;
+            border-radius: 50%;
+            width: 2.5rem;
+            height: 2.5rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.2s, transform 0.2s;
+            backdrop-filter: blur(5px); /* Frosted glass effect */
+        }
+        .nav-arrow:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(-50%) scale(1.05);
+        }
+        #prevVideoButton {
+            top: 6rem; /* Below header */
+        }
+        #nextVideoButton {
+            bottom: 6rem; /* Above action bar */
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95); /* Extremely dark overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #1a1a1a; /* Dark background for modal content */
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            max-width: 90%;
+            max-height: 90vh;
+            width: 600px; /* Slightly narrower for mobile feel */
+            transform: translateY(-10px); /* Subtle slide in */
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
+            color: #f0f0f0;
+            position: relative;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: #cccccc; /* Light gray close button */
+            cursor: pointer;
+            transition: transform 0.2s, color 0.2s;
+        }
+        .modal-close-button:hover {
+            transform: rotate(90deg);
+            color: #ffffff;
+        }
+        
+        /* Comment Section in Comment Modal */
+        #commentsSection {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #fe2c55 #333333; /* TikTok red scrollbar */
+        }
+        #commentsSection::-webkit-scrollbar {
+            width: 8px;
+        }
+        #commentsSection::-webkit-scrollbar-track {
+            background: #333333;
+            border-radius: 4px;
+        }
+        #commentsSection::-webkit-scrollbar-thumb {
+            background-color: #fe2c55; /* TikTok red */
+            border-radius: 4px;
+            border: 2px solid #333333;
+        }
+
+        /* Input and Button Styles */
+        .input-field {
+            border: 1px solid #444444;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            background-color: #2a2a2a;
+            color: #f0f0f0;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #fe2c55; /* TikTok red focus */
+        }
+        .primary-button {
+            background-color: #fe2c55; /* TikTok red */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            transition: background-color 0.2s ease-in-out;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .primary-button:hover {
+            background-color: #d12747;
+        }
+        .text-main-title {
+            color: white; /* Main titles in modals are white */
+        }
+        .text-message {
+            color: #ffd700; /* Yellow for general messages */
+        }
+        .message-success {
+            color: #90EE90;
+        }
+        .message-error {
+            color: #FA8072;
+        }
+
+        /* Like button animation */
+        @keyframes pulse-heart {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .animate-pulse-heart {
+            animation: pulse-heart 0.3s ease-out;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .video-feed-container {
+                margin-top: 56px; /* Header height */
+                height: calc(100vh - 56px); /* Full height minus header */
+            }
+            .video-wrapper {
+                max-width: 100vw;
+                max-height: 100%;
+            }
+            .header {
+                padding: 0.75rem 1rem;
+            }
+            .logo {
+                font-size: 1.4rem;
+            }
+            .nav-link {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            .actions-overlay {
+                bottom: 0.75rem;
+                right: 0.5rem;
+                gap: 1.2rem;
+            }
+            .action-button i {
+                font-size: 1.5rem;
+            }
+            .profile-pic-uploader {
+                width: 2.2rem;
+                height: 2.2rem;
+            }
+            .add-profile-icon {
+                width: 1rem;
+                height: 1rem;
+                font-size: 0.6rem;
+                bottom: -6px;
+            }
+            .user-info .uploader-handle {
+                font-size: 1rem;
+            }
+            .video-title {
+                font-size: 1rem;
+            }
+            .video-description {
+                font-size: 0.8rem;
+            }
+            .content-overlay {
+                padding: 0.75rem;
+                padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            }
+            .nav-arrow {
+                width: 2rem;
+                height: 2rem;
+                font-size: 1rem;
+            }
+            #prevVideoButton {
+                top: 5rem;
+            }
+            #nextVideoButton {
+                bottom: 5rem;
+            }
+            .modal-content {
+                padding: 1rem;
+                border-radius: 0.75rem;
+            }
+            .modal-close-button {
+                font-size: 1.5rem;
+            }
+            #commentsSection {
+                max-height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header p-3 flex items-center justify-between">
+        <div class="flex-1 text-center hidden sm:block">
+            <!-- Left side, can be empty or have branding -->
+        </div>
+        <div class="flex-1 flex justify-center gap-6">
+            <a href="#" class="nav-link">Following</a>
+            <a href="#" class="nav-link active">For You</a>
+        </div>
+        <div class="flex-1 flex justify-end items-center gap-4 pr-2">
+            <button class="nav-link" id="uploadVideoLink"><i class="fa-solid fa-plus mr-1"></i>Upload</button>
+            <button class="nav-link" id="loginSignupLink"><i class="fa-solid fa-user"></i></button>
+        </div>
+    </header>
+
+    <!-- Main Content - TikTok-style Video Feed -->
+    <main class="video-feed-container">
+        <div id="videoWrapper" class="video-wrapper">
+            <!-- Video content will be injected here by JavaScript -->
+        </div>
+
+        <!-- Navigation Arrows for simulating vertical scroll -->
+        <button id="prevVideoButton" class="nav-arrow hidden"><i class="fa-solid fa-chevron-up"></i></button>
+        <button id="nextVideoButton" class="nav-arrow hidden"><i class="fa-solid fa-chevron-down"></i></button>
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Comment Modal -->
+    <div id="commentModal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="closeCommentModal" class="modal-close-button">
+                <i class="fa-solid fa-times-circle"></i>
+            </button>
+            <h2 id="commentModalVideoTitle" class="text-xl font-bold text-main-title mb-2"></h2>
+            <p id="commentModalUploader" class="text-gray-400 text-sm mb-4"></p>
+            <h3 class="text-lg font-semibold text-white mb-3">Comments:</h3>
+            <div id="commentsSection" class="space-y-3 mb-6">
+                <!-- Comments will be loaded here -->
+            </div>
+            <div class="flex gap-3">
+                <input type="text" id="modalCommentInput" placeholder="Add a comment..." class="input-field flex-grow">
+                <button id="postCommentButton" class="primary-button">Post</button>
+            </div>
+            <p id="commentModalMessage" class="text-sm text-message mt-2 hidden"></p>
+        </div>
+    </div>
+
+    <!-- Upload Video Modal -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="closeUploadModal" class="modal-close-button">
+                <i class="fa-solid fa-times-circle"></i>
+            </button>
+            <h2 class="text-2xl font-bold text-main-title mb-6">Upload Video</h2>
+            <form id="uploadForm" class="space-y-4">
+                <div>
+                    <label for="uploadTitle" class="block text-gray-200 text-sm font-semibold mb-2">Video Title:</label>
+                    <input type="text" id="uploadTitle" placeholder="My Fun Adventure!" required class="input-field w-full">
+                </div>
+                <div>
+                    <label for="uploadDescription" class="block text-gray-200 text-sm font-semibold mb-2">Description:</label>
+                    <textarea id="uploadDescription" rows="3" placeholder="Tell us about your video..." class="input-field w-full resize-y"></textarea>
+                </div>
+                <div>
+                    <label for="uploadFile" class="block text-gray-200 text-sm font-semibold mb-2">Video File (simulated):</label>
+                    <input type="file" id="uploadFile" accept="video/*" class="input-field w-full p-2">
+                    <p class="text-xs text-gray-400 mt-1">*(Actual file upload requires a server)*</p>
+                </div>
+                <div>
+                    <label for="uploadThumbnail" class="block text-gray-200 text-sm font-semibold mb-2">Thumbnail Image (simulated URL):</label>
+                    <input type="text" id="uploadThumbnail" placeholder="https://example.com/thumbnail.jpg" class="input-field w-full">
+                </div>
+                <div class="text-center mt-6">
+                    <button type="submit" class="primary-button">
+                        <i class="fa-solid fa-cloud-upload-alt mr-2"></i>Simulate Upload
+                    </button>
+                </div>
+                <p id="uploadMessage" class="text-center text-sm text-message mt-4 hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login/Signup Modal -->
+    <div id="accountModal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="closeAccountModal" class="modal-close-button">
+                <i class="fa-solid fa-times-circle"></i>
+            </button>
+            <h2 class="text-2xl font-bold text-main-title mb-6 text-center">Join the Fun!</h2>
+            <form id="loginForm" class="space-y-4 mb-8">
+                <h3 class="text-xl font-semibold text-white mb-3">Login</h3>
+                <div>
+                    <label for="loginUsername" class="block text-gray-200 text-sm font-semibold mb-2">Username:</label>
+                    <input type="text" id="loginUsername" placeholder="Your FunTube Name" required class="input-field w-full">
+                </div>
+                <div>
+                    <label for="loginPassword" class="block text-gray-200 text-sm font-semibold mb-2">Password:</label>
+                    <input type="password" id="loginPassword" placeholder="Secret Password" required class="input-field w-full">
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="primary-button">
+                        <i class="fa-solid fa-sign-in-alt mr-2"></i>Login
+                    </button>
+                </div>
+                <p id="loginMessage" class="text-center text-sm text-message mt-2 hidden"></p>
+            </form>
+
+            <hr class="border-t-2 border-dashed border-gray-700 my-8">
+
+            <form id="signupForm" class="space-y-4">
+                <h3 class="text-xl font-semibold text-white mb-3">Sign Up</h3>
+                <div>
+                    <label for="signupUsername" class="block text-gray-200 text-sm font-semibold mb-2">Choose a Username:</label>
+                    <input type="text" id="signupUsername" placeholder="Your New FunTube Name" required class="input-field w-full">
+                </div>
+                <div>
+                    <label for="signupPassword" class="block text-gray-200 text-sm font-semibold mb-2">Choose a Password:</label>
+                    <input type="password" id="signupPassword" placeholder="Keep it a secret!" required class="input-field w-full">
+                </div>
+                 <div>
+                    <label for="signupAge" class="block text-gray-200 text-sm font-semibold mb-2">Your Age (simulated):</label>
+                    <input type="number" id="signupAge" placeholder="8" min="5" max="120" required class="input-field w-full">
+                    <p class="text-xs text-gray-400 mt-1">*(Age check is simulated)*</p>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="primary-button">
+                        <i class="fa-solid fa-user-plus mr-2"></i>Sign Up
+                    </button>
+                </div>
+                <p id="signupMessage" class="text-center text-sm text-message mt-2 hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Simulated Data ---
+        let videos = [
+            {
+                id: 'vid1',
+                title: "My Super Fun Playtime!",
+                uploader: "KidExplorer",
+                uploaderPic: "https://placehold.co/40x40/fe2c55/ffffff?text=KE", // TikTok red profile pic placeholder
+                thumbnail: "https://i.imgur.com/Qj04L0D.jpeg", // Using a sample vertical video thumbnail
+                videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4", // Placeholder video
+                description: "Join me on my fun adventure playing with all my toys and friends!",
+                views: 12345,
+                likes: 567,
+                comments: [
+                    { user: "HappyKid", userPic: "https://placehold.co/30x30/fe2c55/ffffff?text=HK", text: "So cool!" },
+                    { user: "PlayTimePal", userPic: "https://placehold.co/30x30/25f4ee/000000?text=PP", text: "I love this game!" }
+                ],
+                likedByCurrentUser: false
+            },
+            {
+                id: 'vid2',
+                title: "Drawing My Favorite Animals",
+                uploader: "ArtStar",
+                uploaderPic: "https://placehold.co/40x40/25f4ee/000000?text=AS", // Bright cyan profile pic
+                thumbnail: "https://i.imgur.com/K1Y8H3s.jpeg", // Using a sample vertical video thumbnail
+                videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4",
+                description: "Watch me draw my favorite animals: a cute puppy and a happy cat!",
+                views: 8765,
+                likes: 345,
+                comments: [
+                    { user: "CreativeKid", userPic: "https://placehold.co/30x30/fe2c55/ffffff?text=CK", text: "Wow, beautiful drawings!" }
+                ],
+                likedByCurrentUser: false
+            },
+            {
+                id: 'vid3',
+                title: "Building a Giant Lego Castle!",
+                uploader: "BlockBuilder",
+                uploaderPic: "https://placehold.co/40x40/ffc107/000000?text=BB", // Orange profile pic
+                thumbnail: "https://i.imgur.com/y8Z2h0c.jpeg", // Using a sample vertical video thumbnail
+                videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4",
+                description: "Come see my amazing Lego castle with towers, bridges, and a secret dungeon!",
+                views: 23456,
+                likes: 1230,
+                comments: [
+                    { user: "MasterBuilder", userPic: "https://placehold.co/30x30/fe2c55/ffffff?text=MB", text: "That castle is awesome!" },
+                    { user: "LegoFan", userPic: "https://placehold.co/30x30/25f4ee/000000?text=LF", text: "Can you make a video on how you did that?" }
+                ],
+                likedByCurrentUser: false
+            },
+            {
+                id: 'vid4',
+                title: "Singing My Favorite Song",
+                uploader: "SingAlong",
+                uploaderPic: "https://placehold.co/40x40/007bff/ffffff?text=SA", // Blue profile pic
+                thumbnail: "https://i.imgur.com/Xq2R2xH.jpeg", // Using a sample vertical video thumbnail
+                videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4",
+                description: "Listen to me sing my favorite song! Hope you sing along too!",
+                views: 9876,
+                likes: 789,
+                comments: [],
+                likedByCurrentUser: false
+            },
+            {
+                id: 'vid5',
+                title: "Science Experiments at Home",
+                uploader: "MadScientistJr",
+                uploaderPic: "https://placehold.co/40x40/8a2be2/ffffff?text=MS", // Purple profile pic
+                thumbnail: "https://i.imgur.com/f2Z2L7Q.jpeg", // Using a sample vertical video thumbnail
+                videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4",
+                description: "Cool and safe science experiments you can do at home with your parents!",
+                views: 15000,
+                likes: 900,
+                comments: [
+                    { user: "SmartKid", userPic: "https://placehold.co/30x30/fe2c55/ffffff?text=SK", text: "This is so interesting!" },
+                    { user: "FutureInventor", userPic: "https://placehold.co/30x30/25f4ee/000000?text=FI", text: "I want to try this!" }
+                ],
+                likedByCurrentUser: false
+            },
+            {
+                id: 'vid6',
+                title: "My Pet Puppy's Day",
+                uploader: "PetLover",
+                uploaderPic: "https://placehold.co/40x40/dc3545/ffffff?text=PL", // Red profile pic
+                thumbnail: "https://i.imgur.com/d8s4C1e.jpeg", // Using a sample vertical video thumbnail
+                videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4",
+                description: "A day in the life of my adorable pet puppy. Watch him play and nap!",
+                views: 30000,
+                likes: 2500,
+                comments: [
+                    { user: "AnimalFan", userPic: "https://placehold.co/30x30/fe2c55/ffffff?text=AF", text: "Your puppy is so cute!" },
+                    { user: "DoggoFriend", userPic: "https://placehold.co/30x30/25f4ee/000000?text=DF", text: "Aww, what a good dog!" },
+                    { user: "BestFriend", userPic: "https://placehold.co/30x40/fe2c55/ffffff?text=BF", text: "He loves playing fetch!" }
+                ],
+                likedByCurrentUser: false
+            }
+        ];
+
+        let accounts = [ // Simulated accounts
+            { username: "KidExplorer", password: "password123", age: 9, profilePic: "https://placehold.co/40x40/fe2c55/ffffff?text=KE" },
+            { username: "ArtStar", password: "password123", age: 10, profilePic: "https://placehold.co/40x40/25f4ee/000000?text=AS" }
+        ];
+
+        let loggedInUser = null; // Simulate login state
+        let currentVideoIndex = 0; // Track which video is currently displayed
+
+        // --- DOM Elements ---
+        const videoWrapper = document.getElementById('videoWrapper');
+        const commentModal = document.getElementById('commentModal');
+        const uploadModal = document.getElementById('uploadModal');
+        const accountModal = document.getElementById('accountModal');
+
+        const commentModalVideoTitle = document.getElementById('commentModalVideoTitle');
+        const commentModalUploader = document.getElementById('commentModalUploader');
+        const commentsSection = document.getElementById('commentsSection');
+        const modalCommentInput = document.getElementById('modalCommentInput');
+        const postCommentButton = document.getElementById('postCommentButton');
+        const commentModalMessage = document.getElementById('commentModalMessage');
+
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadMessage = document.getElementById('uploadMessage');
+        const loginForm = document.getElementById('loginForm');
+        const loginMessage = document.getElementById('loginMessage');
+        const signupForm = document.getElementById('signupForm');
+        const signupMessage = document.getElementById('signupMessage');
+
+        const prevVideoButton = document.getElementById('prevVideoButton');
+        const nextVideoButton = document.getElementById('nextVideoButton');
+
+        // --- Helper Functions ---
+
+        function formatCount(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        function closeModal(modalElement) {
+            modalElement.classList.remove('open');
+        }
+
+        function openModal(modalElement) {
+            modalElement.classList.add('open');
+        }
+
+        // --- Render Current Video (TikTok Style) ---
+        function renderCurrentVideo() {
+            const video = videos[currentVideoIndex];
+            if (!video) {
+                videoWrapper.innerHTML = '<p class="text-white text-lg">No videos to display!</p>';
+                prevVideoButton.classList.add('hidden');
+                nextVideoButton.classList.add('hidden');
+                return;
+            }
+
+            videoWrapper.innerHTML = `
+                <img src="${video.thumbnail}" alt="${video.title}" class="video-thumbnail" onerror="this.onerror=null;this.src='https://placehold.co/500x800/222222/eeeeee?text=Video';" />
+                <video class="video-element" loop muted playsinline webkit-playsinline>
+                    <source src="${video.videoSrc}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+
+                <div class="content-overlay">
+                    <div class="user-info mb-2">
+                        <span class="uploader-handle">@${video.uploader}</span>
+                    </div>
+                    <p class="video-title">${video.title}</p>
+                    <p class="video-description">${video.description}</p>
+                </div>
+
+                <div class="actions-overlay">
+                    <div class="profile-pic-uploader">
+                        <img src="${video.uploaderPic}" alt="${video.uploader}" onerror="this.onerror=null;this.src='https://placehold.co/40x40/333333/ffffff?text=${video.uploader.substring(0,2).toUpperCase()}';" />
+                        <div class="add-profile-icon"><i class="fa-solid fa-plus"></i></div>
+                    </div>
+                    <div class="action-button" id="likeButton">
+                        <i class="fa-solid fa-heart ${video.likedByCurrentUser ? 'liked' : ''}"></i>
+                        <span>${formatCount(video.likes)}</span>
+                    </div>
+                    <div class="action-button" id="commentButton">
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <span>${video.comments.length}</span>
+                    </div>
+                    <div class="action-button">
+                        <i class="fa-solid fa-share"></i>
+                        <span>Share</span>
+                    </div>
+                </div>
+            `;
+
+            const currentVideoElement = videoWrapper.querySelector('.video-element');
+            const currentThumbnailElement = videoWrapper.querySelector('.video-thumbnail');
+            const likeButton = document.getElementById('likeButton');
+            const commentButton = document.getElementById('commentButton');
+
+            currentVideoElement.onplay = () => {
+                videoWrapper.classList.add('video-playing');
+            };
+            currentVideoElement.onpause = () => {
+                videoWrapper.classList.remove('video-playing');
+            };
+
+            // Attempt to autoplay, with fallback for user interaction
+            const playVideo = () => {
+                currentVideoElement.play().then(() => {
+                    videoWrapper.classList.add('video-playing');
+                }).catch(e => {
+                    console.log("Autoplay prevented:", e);
+                    // Show play button if autoplay fails
+                    const playOverlay = document.createElement('div');
+                    playOverlay.className = 'absolute inset-0 flex items-center justify-center bg-black/50 z-10';
+                    playOverlay.innerHTML = '<i class="fa-solid fa-play text-4xl text-white cursor-pointer"></i>';
+                    playOverlay.onclick = () => {
+                        currentVideoElement.play();
+                        playOverlay.remove();
+                    };
+                    videoWrapper.appendChild(playOverlay);
+                    videoWrapper.classList.remove('video-playing'); // Ensure thumbnail is visible
+                });
+            };
+            
+            // On load, attempt to play. For mobile, it might need a tap.
+            currentVideoElement.load();
+            playVideo();
+
+            // Event listeners for action buttons
+            likeButton.onclick = () => simulateLike(video, likeButton);
+            commentButton.onclick = () => openCommentModal(video);
+
+            // Hide/show navigation arrows
+            prevVideoButton.classList.toggle('hidden', currentVideoIndex === 0);
+            nextVideoButton.classList.toggle('hidden', currentVideoIndex === videos.length - 1);
+
+            // Scroll to the top of the comments section when modal opens
+            commentsSection.scrollTop = 0;
+        }
+
+        // --- Video Navigation ---
+        const navigateVideo = (direction) => {
+            const currentVideoElement = videoWrapper.querySelector('.video-element');
+            if (currentVideoElement) currentVideoElement.pause();
+
+            if (direction === 'next' && currentVideoIndex < videos.length - 1) {
+                currentVideoIndex++;
+            } else if (direction === 'prev' && currentVideoIndex > 0) {
+                currentVideoIndex--;
+            }
+            renderCurrentVideo();
+        };
+
+        prevVideoButton.addEventListener('click', () => navigateVideo('prev'));
+        nextVideoButton.addEventListener('click', () => navigateVideo('next'));
+
+        // Swipe / Touch navigation for mobile
+        let touchStartY = 0;
+        let touchEndY = 0;
+        const minSwipeDistance = 50; // pixels
+
+        videoWrapper.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        videoWrapper.addEventListener('touchmove', (e) => {
+            touchEndY = e.touches[0].clientY;
+        }, { passive: true });
+
+        videoWrapper.addEventListener('touchend', () => {
+            const distance = touchStartY - touchEndY;
+            if (distance > minSwipeDistance) { // Swipe up (next video)
+                navigateVideo('next');
+            } else if (distance < -minSwipeDistance) { // Swipe down (previous video)
+                navigateVideo('prev');
+            }
+            // Reset touch positions
+            touchStartY = 0;
+            touchEndY = 0;
+        });
+
+
+        // --- Comment Modal Logic ---
+        function openCommentModal(video) {
+            commentModalVideoTitle.textContent = video.title;
+            commentModalUploader.textContent = `by @${video.uploader}`;
+            
+            commentsSection.innerHTML = '';
+            if (video.comments.length === 0) {
+                commentsSection.innerHTML = '<p class="text-gray-500 text-center text-sm py-4">No comments yet! Be the first to comment. 💬</p>';
+            } else {
+                video.comments.forEach(comment => {
+                    const commentEl = document.createElement('div');
+                    commentEl.classList.add('bg-gray-800', 'rounded-lg', 'p-3', 'mb-2', 'flex', 'items-start', 'gap-3');
+                    commentEl.innerHTML = `
+                        <img src="${comment.userPic || 'https://placehold.co/30x30/333333/ffffff?text=' + comment.user.substring(0,1).toUpperCase()}"
+                             alt="${comment.user}" class="w-8 h-8 rounded-full flex-shrink-0" onerror="this.onerror=null;this.src='https://placehold.co/30x30/333333/ffffff?text=${comment.user.substring(0,1).toUpperCase()}';" />
+                        <div>
+                            <span class="font-semibold text-white">@${comment.user}:</span> ${comment.text}
+                        </div>
+                    `;
+                    commentsSection.appendChild(commentEl);
+                });
+            }
+            
+            postCommentButton.onclick = () => simulateComment(video);
+            modalCommentInput.value = '';
+            commentModalMessage.classList.add('hidden');
+
+            openModal(commentModal);
+            // Scroll to bottom of comments for new comments (optional, depending on desired UX)
+            // commentsSection.scrollTop = commentsSection.scrollHeight;
+        }
+
+        function simulateLike(video, buttonElement) {
+            if (loggedInUser) {
+                if (!video.likedByCurrentUser) {
+                    video.likes++;
+                    video.likedByCurrentUser = true;
+                    buttonElement.classList.add('liked', 'animate-pulse-heart'); // Add pulse animation
+                    setTimeout(() => buttonElement.classList.remove('animate-pulse-heart'), 300); // Remove after short delay
+                } else {
+                    video.likes--;
+                    video.likedByCurrentUser = false;
+                    buttonElement.classList.remove('liked');
+                }
+                buttonElement.querySelector('span').textContent = formatCount(video.likes);
+            } else {
+                alert("Please log in to like videos!");
+                openModal(accountModal);
+            }
+        }
+
+        function simulateComment(video) {
+            const commentText = modalCommentInput.value.trim();
+            if (!loggedInUser) {
+                commentModalMessage.textContent = "Please log in to post comments!";
+                commentModalMessage.classList.remove('hidden');
+                commentModalMessage.classList.add('message-error');
+                return;
+            }
+            if (commentText) {
+                video.comments.push({
+                    user: loggedInUser.username,
+                    userPic: loggedInUser.profilePic, // Use logged in user's profile pic
+                    text: commentText
+                });
+                
+                // Update comment count on the main video
+                const commentCountSpan = videoWrapper.querySelector('#commentButton span');
+                if (commentCountSpan) {
+                    commentCountSpan.textContent = video.comments.length;
+                }
+                openCommentModal(video); // Re-render comments in modal
+                modalCommentInput.value = '';
+                commentModalMessage.classList.add('hidden');
+            } else {
+                commentModalMessage.textContent = "Comment cannot be empty!";
+                commentModalMessage.classList.remove('hidden');
+                commentModalMessage.classList.add('message-error');
+            }
+        }
+
+        // --- Upload Modal Logic ---
+        document.getElementById('uploadVideoLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (loggedInUser) {
+                openModal(uploadModal);
+                uploadForm.reset();
+                uploadMessage.classList.add('hidden');
+            } else {
+                alert("You need to be logged in to upload videos!");
+                openModal(accountModal);
+            }
+        });
+
+        uploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('uploadTitle').value;
+            const description = document.getElementById('uploadDescription').value;
+            const uploader = loggedInUser ? loggedInUser.username : "Anonymous";
+            const uploaderPic = loggedInUser ? loggedInUser.profilePic || "https://placehold.co/40x40/333333/ffffff?text=" + uploader.substring(0,2).toUpperCase() : "https://placehold.co/40x40/333333/ffffff?text=AN";
+            const thumbnail = document.getElementById('uploadThumbnail').value || "https://placehold.co/500x800/444444/ffffff?text=New+Video";
+
+            videos.unshift({ // Add to the beginning of the array
+                id: 'newVid' + Date.now(),
+                title: title,
+                uploader: uploader,
+                uploaderPic: uploaderPic,
+                description: description,
+                thumbnail: thumbnail,
+                videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4", // Default placeholder video
+                views: 0,
+                likes: 0,
+                comments: [],
+                likedByCurrentUser: false
+            });
+            currentVideoIndex = 0; // Show the newly uploaded video
+            renderCurrentVideo(); // Re-render the current video view
+            uploadMessage.textContent = "Video upload simulated successfully! (No actual file uploaded)";
+            uploadMessage.classList.remove('hidden');
+            uploadMessage.classList.add('message-success');
+            uploadForm.reset();
+            closeModal(uploadModal); // Close modal after simulated upload
+        });
+
+        // --- Account Modal Logic (Login/Signup) ---
+        document.getElementById('loginSignupLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            openModal(accountModal);
+            loginForm.reset();
+            signupForm.reset();
+            loginMessage.classList.add('hidden');
+            signupMessage.classList.add('hidden');
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const account = accounts.find(acc => acc.username === username && acc.password === password);
+            if (account) {
+                loggedInUser = account;
+                loginMessage.textContent = `Welcome back, ${loggedInUser.username}!`;
+                loginMessage.classList.remove('hidden');
+                loginMessage.classList.add('message-success');
+                setTimeout(() => { closeModal(accountModal); renderCurrentVideo(); }, 1500); // Re-render current video to update like status
+            } else {
+                loginMessage.textContent = "Incorrect username or password.";
+                loginMessage.classList.remove('hidden');
+                loginMessage.classList.add('message-error');
+            }
+        });
+
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signupUsername').value;
+            const password = document.getElementById('signupPassword').value;
+            const age = parseInt(document.getElementById('signupAge').value);
+
+            if (accounts.some(acc => acc.username === username)) {
+                signupMessage.textContent = "Username already taken!";
+                signupMessage.classList.remove('hidden');
+                signupMessage.classList.add('message-error');
+                return;
+            }
+            if (age < 5) { // Simple age check for a kids site
+                signupMessage.textContent = "You need to be at least 5 years old to join the fun!";
+                signupMessage.classList.remove('hidden');
+                signupMessage.classList.add('message-error');
+                return;
+            }
+
+            const newAccount = { username, password, age, profilePic: "https://placehold.co/40x40/fe2c55/ffffff?text=" + username.substring(0,2).toUpperCase() }; // Assign a default pic
+            accounts.push(newAccount);
+            loggedInUser = newAccount;
+            signupMessage.textContent = `Hooray, ${username}! Your account is created!`;
+            signupMessage.classList.remove('hidden');
+            signupMessage.classList.add('message-success');
+            setTimeout(() => { closeModal(accountModal); renderCurrentVideo(); }, 1500); // Re-render to update
+        });
+        
+        // --- Navigation Link Actions (Simulated) ---
+        // Removed "My Channel" from header for cleaner TikTok-like UI
+        // document.getElementById('myChannelLink').addEventListener('click', (e) => {
+        //     e.preventDefault();
+        //     if (loggedInUser) {
+        //         alert(`Simulating "My Channel" for ${loggedInUser.username}. You would see your uploaded videos here!`);
+        //     } else {
+        //         alert("Please log in to view your channel!");
+        //         openModal(accountModal);
+        //     }
+        // });
+
+
+        // --- Close Modal Event Listeners ---
+        document.getElementById('closeCommentModal').addEventListener('click', () => closeModal(commentModal));
+        document.getElementById('closeUploadModal').addEventListener('click', () => closeModal(uploadModal));
+        document.getElementById('closeAccountModal').addEventListener('click', () => {
+            console.log("Close Account Modal button clicked!"); // Debug log
+            closeModal(accountModal);
+        });
+
+        // Close modal when clicking outside of it (overlay)
+        commentModal.addEventListener('click', (e) => { if (e.target === commentModal) closeModal(commentModal); });
+        uploadModal.addEventListener('click', (e) => { if (e.target === uploadModal) closeModal(uploadModal); });
+        accountModal.addEventListener('click', (e) => { if (e.target === accountModal) closeModal(accountModal); });
+
+
+        // Initial render on page load
+        window.onload = renderCurrentVideo;
+    </script>
+</body>
+</html>
