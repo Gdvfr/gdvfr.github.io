@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Hub</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #222;
+      padding: 15px;
+      text-align: center;
+      font-size: 1.5em;
+    }
+    .upload {
+      padding: 20px;
+      text-align: center;
+    }
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .video-card {
+      background: #1e1e1e;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+    video {
+      width: 100%;
+      border-radius: 8px;
+    }
+    .desc {
+      margin-top: 8px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <header>📹 Video Hub</header>
+
+  <div class="upload">
+    <h2>Upload a Video</h2>
+    <input type="file" id="videoUpload" accept="video/*"><br><br>
+    <input type="text" id="videoDesc" placeholder="Enter description"><br><br>
+    <button onclick="saveVideo()">Upload</button>
+    <button onclick="clearAll()">Clear All</button>
+  </div>
+
+  <div class="video-grid" id="videoGrid"></div>
+
+  <script>
+    // Load saved videos on page load
+    window.onload = function() {
+      loadVideos();
+    };
+
+    function saveVideo() {
+      const fileInput = document.getElementById('videoUpload');
+      const descInput = document.getElementById('videoDesc');
+
+      if (fileInput.files.length === 0) {
+        alert("Please select a video!");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        const base64Video = event.target.result;
+        const desc = descInput.value;
+
+        // Save to localStorage
+        let videos = JSON.parse(localStorage.getItem("videos")) || [];
+        videos.push({ video: base64Video, desc: desc });
+        localStorage.setItem("videos", JSON.stringify(videos));
+
+        // Update UI
+        addVideoCard(base64Video, desc);
+
+        // Reset inputs
+        fileInput.value = "";
+        descInput.value = "";
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function addVideoCard(videoSrc, desc) {
+      const grid = document.getElementById('videoGrid');
+      const card = document.createElement('div');
+      card.className = 'video-card';
+      card.innerHTML = `
+        <video controls>
+          <source src="${videoSrc}">
+          Your browser does not support video.
+        </video>
+        <div class="desc">${desc}</div>
+      `;
+      grid.appendChild(card);
+    }
+
+    function loadVideos() {
+      let videos = JSON.parse(localStorage.getItem("videos")) || [];
+      videos.forEach(v => addVideoCard(v.video, v.desc));
+    }
+
+    function clearAll() {
+      if (confirm("Are you sure you want to clear all saved videos?")) {
+        localStorage.removeItem("videos");
+        document.getElementById("videoGrid").innerHTML = "";
+      }
+    }
+  </script>
+</body>
+</html>
