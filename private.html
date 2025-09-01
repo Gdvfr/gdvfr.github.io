@@ -52,7 +52,6 @@
           <div class="w-full md:w-1/2">
               <h2 class="text-2xl font-bold mb-4 text-center text-gray-200">Upload a File</h2>
               <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                  <!-- FIX: Updated accept attribute to include .mov files -->
                   <input type="file" id="file-upload" accept="video/*,image/*,.mov" class="w-full sm:w-auto text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 transition-colors duration-200">
                   <input type="text" id="file-desc" placeholder="Enter a description" class="w-full sm:flex-grow p-2 rounded-lg bg-gray-700 text-gray-200 placeholder-gray-500 border border-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent">
                   <div class="flex items-center space-x-2">
@@ -91,30 +90,103 @@
     </div>
   </div>
   <script>
-    // --- In-Browser Storage Logic ---
-    let videoHubData = {};
-    let currentFolder = "uncategorized";
-    const STORAGE_KEY = 'videoHubData';
-    // FIX: Increased the file size limit to 50MB
+    // --- IndexedDB Configuration ---
+    const DB_NAME = 'VideoHubDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'files';
     const MAX_FILE_SIZE_MB = 50;
+    
+    let db;
+    let foldersData = {};
 
-    // Load data from localStorage on start
-    function loadFromLocalStorage() {
-        const data = localStorage.getItem(STORAGE_KEY);
-        if (data) {
-            videoHubData = JSON.parse(data);
-        } else {
-            // Initialize with a default 'uncategorized' folder
-            videoHubData = { folders: { "uncategorized": [] } };
-        }
-        renderFolders();
-        renderFiles();
+    // --- IndexedDB Initialization ---
+    function openDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onerror = (event) => {
+                console.error("IndexedDB error:", event.target.error);
+                reject("Database error. Could not connect.");
+            };
+
+            request.onupgradeneeded = (event) => {
+                db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                }
+            };
+
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                resolve(db);
+            };
+        });
     }
 
-    // Save data to localStorage
-    function saveToLocalStorage() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(videoHubData));
-        renderFiles();
+    // --- Data Persistence Logic ---
+    async function getStoredFolders() {
+        const folders = localStorage.getItem('videoHubFolders');
+        if (folders) {
+            foldersData = JSON.parse(folders);
+        } else {
+            foldersData = { "uncategorized": [] };
+            localStorage.setItem('videoHubFolders', JSON.stringify(foldersData));
+        }
+    }
+
+    async function getFilesFromDB(folderName) {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const filePromises = foldersData[folderName].map(fileId => {
+            return new Promise((resolve, reject) => {
+                const req = store.get(fileId);
+                req.onsuccess = (event) => {
+                    resolve(event.target.result);
+                };
+                req.onerror = (event) => {
+                    reject(event.target.error);
+                };
+            });
+        });
+        return Promise.all(filePromises);
+    }
+    
+    async function saveFileToDB(file, description) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const newFileId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const newFile = {
+        id: newFileId,
+        data: file,
+        description: description,
+        type: file.type,
+        createdAt: new Date().toISOString()
+      };
+
+      return new Promise((resolve, reject) => {
+        const req = store.add(newFile);
+        req.onsuccess = () => {
+          resolve(newFileId);
+        };
+        req.onerror = (event) => {
+          reject(event.target.error);
+        };
+      });
+    }
+
+    async function deleteFileFromDB(fileId) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.delete(fileId);
+            req.onsuccess = () => {
+                resolve();
+            };
+            req.onerror = (event) => {
+                reject(event.target.error);
+            };
+        });
     }
 
     // --- UI Logic ---
@@ -155,28 +227,31 @@
     function renderFolders() {
         const folderList = document.getElementById('folder-list');
         folderList.innerHTML = '';
-        for (const folderName in videoHubData.folders) {
+        for (const folderName in foldersData) {
             addFolderButton(folderName);
         }
         updateActiveFolderButton();
     }
 
     // Renders files for the current folder
-    function renderFiles() {
+    async function renderFiles() {
         const fileGrid = document.getElementById('file-grid');
         fileGrid.innerHTML = '';
-        const files = videoHubData.folders[currentFolder] || [];
         
-        if (files.length === 0) {
+        if (!foldersData[currentFolder] || foldersData[currentFolder].length === 0) {
             fileGrid.innerHTML = `<div class="col-span-1 md:col-span-3 lg:col-span-3 text-center py-10 text-gray-400">
                 <p class="text-xl">No files in this folder.</p>
                 <p class="mt-2 text-md">Use the upload section above to add a video or image.</p>
             </div>`;
-        } else {
-            files.forEach((file, index) => {
-                addFileCard(index, file.fileSrc, file.description, file.fileType);
-            });
+            return;
         }
+
+        const files = await getFilesFromDB(currentFolder);
+        files.forEach((file) => {
+            if (file) { // Check if file exists in DB
+                addFileCard(file.id, file.data, file.description, file.type);
+            }
+        });
     }
 
     // --- Core Functions ---
@@ -188,19 +263,19 @@
             return;
         }
 
-        if (videoHubData.folders[folderName]) {
+        if (foldersData[folderName]) {
             showModal("A folder with that name already exists!");
             return;
         }
 
-        videoHubData.folders[folderName] = [];
+        foldersData[folderName] = [];
         folderNameInput.value = '';
-        saveToLocalStorage();
+        localStorage.setItem('videoHubFolders', JSON.stringify(foldersData));
         renderFolders();
         showModal(`Folder "${folderName}" created!`);
     };
 
-    window.saveFile = function() {
+    window.saveFile = async function() {
         const fileInput = document.getElementById('file-upload');
         const descInput = document.getElementById('file-desc');
         const uploadButton = document.getElementById('upload-btn');
@@ -214,50 +289,58 @@
         const file = fileInput.files[0];
         const description = descInput.value || "No description provided.";
         const fileType = file.type;
+        const fileExtension = file.name.split('.').pop().toLowerCase();
 
-        if (!fileType.startsWith('video/') && !fileType.startsWith('image/') && file.name.endsWith('.mov')) {
-            showModal("The selected file is not a supported video or image type. Please upload a supported file type.");
-            return;
-        }
-        
         if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
              showModal(`The file is too large! Please upload a file smaller than ${MAX_FILE_SIZE_MB}MB.`);
              return;
         }
 
+        // FIX: Added 'video/quicktime' and other checks for different browser behaviors
+        const supportedTypes = ['video/', 'image/', 'video/quicktime'];
+        if (!supportedTypes.some(type => fileType.startsWith(type)) && fileExtension !== 'mov') {
+            showModal("The selected file is not a supported video or image type. Please upload a supported file type.");
+            return;
+        }
+
         uploadButton.classList.add('hidden');
         loadingIndicator.classList.remove('hidden');
 
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const base64File = event.target.result;
-            
-            const newFile = {
-                fileSrc: base64File,
-                description: description,
-                fileType: fileType,
-                createdAt: new Date().toISOString()
-            };
-
-            videoHubData.folders[currentFolder].push(newFile);
-            saveToLocalStorage();
+        try {
+            const newFileId = await saveFileToDB(file, description);
+            foldersData[currentFolder].push(newFileId);
+            localStorage.setItem('videoHubFolders', JSON.stringify(foldersData));
             
             // Reset UI
             fileInput.value = "";
             descInput.value = "";
+            showModal("File uploaded successfully!");
+            renderFiles(); // Re-render to show the new file
+        } catch (error) {
+            console.error("Upload error:", error);
+            showModal("There was an error uploading the file. Please try a different file.");
+        } finally {
             uploadButton.classList.remove('hidden');
             loadingIndicator.classList.add('hidden');
-            showModal("File uploaded successfully!");
-        };
-
-        reader.readAsDataURL(file);
+        }
     };
 
-    window.deleteFile = function(fileIndex) {
-        showModal("Are you sure you want to delete this file?", true, () => {
-            if (videoHubData.folders[currentFolder]) {
-                videoHubData.folders[currentFolder].splice(fileIndex, 1);
-                saveToLocalStorage();
+    window.deleteFile = function(fileId) {
+        showModal("Are you sure you want to delete this file?", true, async () => {
+            try {
+                // Find the index of the file ID to remove from the folder list
+                const fileIndex = foldersData[currentFolder].indexOf(fileId);
+                if (fileIndex > -1) {
+                    foldersData[currentFolder].splice(fileIndex, 1);
+                    localStorage.setItem('videoHubFolders', JSON.stringify(foldersData));
+                }
+
+                await deleteFileFromDB(fileId);
+                showModal("File deleted successfully!");
+                renderFiles();
+            } catch (error) {
+                console.error("Delete error:", error);
+                showModal("There was an error deleting the file.");
             }
         });
     };
@@ -289,23 +372,24 @@
         });
     }
 
-    function addFileCard(fileIndex, fileSrc, description, fileType) {
+    function addFileCard(fileId, fileBlob, description, fileType) {
         const grid = document.getElementById('file-grid');
         const card = document.createElement('div');
         card.className = 'relative flex flex-col items-center bg-gray-800 rounded-xl overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-105 group';
         
         let mediaElement;
-        // FIX: Replaced video and image elements with a unified container for consistent dimensions
+        const objectURL = URL.createObjectURL(fileBlob);
+        
         if (fileType.startsWith('video/') || fileType === 'video/quicktime') {
             mediaElement = `<div class="video-card-container">
                                 <video controls>
-                                    <source src="${fileSrc}" type="${fileType}">
+                                    <source src="${objectURL}" type="${fileType}">
                                     Your browser does not support the video tag.
                                 </video>
                             </div>`;
         } else if (fileType.startsWith('image/')) {
             mediaElement = `<div class="video-card-container">
-                                <img src="${fileSrc}" alt="${description}">
+                                <img src="${objectURL}" alt="${description}">
                             </div>`;
         } else {
             mediaElement = `<div class="w-full h-48 flex items-center justify-center text-gray-400">Unsupported File Type</div>`;
@@ -322,7 +406,7 @@
             <div class="p-4 w-full flex-grow">
                 <p class="text-sm text-gray-400 truncate">${description}</p>
             </div>
-            <button onclick="deleteFile('${fileIndex}')" class="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full text-white shadow-lg transition-transform duration-200 transform hover:scale-110">
+            <button onclick="deleteFile('${fileId}')" class="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full text-white shadow-lg transition-transform duration-200 transform hover:scale-110">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.328a4 4 0 0 0-4.04-4.04a4 4 0 0 0-4.04 4.04L6 10.74l-.346 9m-4.788 0a4 4 0 0 1-4.04-4.04a4 4 0 0 1-4.04 4.04" />
                 </svg>
@@ -332,8 +416,15 @@
     }
     
     // Initial page load
-    window.onload = function() {
-        loadFromLocalStorage();
+    window.onload = async function() {
+        try {
+            await openDatabase();
+            await getStoredFolders();
+            renderFolders();
+            renderFiles();
+        } catch (error) {
+            showModal("Failed to load app data. Your browser might not support IndexedDB.");
+        }
     };
   </script>
 </body>
