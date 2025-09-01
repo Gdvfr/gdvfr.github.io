@@ -24,7 +24,7 @@
         __app_id = appId;
     } catch (e) {
         console.warn("Firebase variables not found, using defaults for local development.");
-        __firebase_config = "{}"; // Fix: Use a valid JSON string
+        __firebase_config = '{"projectId":"your-project-id"}'; // Fix: Use a valid JSON string with a project ID
         __initial_auth_token = null;
         __app_id = 'default-app-id';
     }
@@ -118,14 +118,28 @@
 
     // Function to update the file listener when the folder changes
     function updateFileListener() {
+        if (!userId) {
+            console.error("User ID is not set. Cannot update file listener.");
+            return;
+        }
+
         const filesCollection = collection(db, `artifacts/${__app_id}/users/${userId}/folders/${currentFolder}/files`);
         onSnapshot(filesCollection, (snapshot) => {
             const fileGrid = document.getElementById('file-grid');
             fileGrid.innerHTML = '';
-            snapshot.forEach((doc) => {
-                const fileData = doc.data();
-                addFileCard(doc.id, fileData.fileSrc, fileData.description, fileData.fileType);
-            });
+            
+            if (snapshot.empty) {
+                fileGrid.innerHTML = `<div class="col-span-1 md:col-span-3 lg:col-span-3 text-center py-10 text-gray-400">
+                    <p class="text-xl">No files in this folder.</p>
+                    <p class="mt-2 text-md">Use the upload section above to add a video or image.</p>
+                </div>`;
+            } else {
+                snapshot.forEach((doc) => {
+                    const fileData = doc.data();
+                    addFileCard(doc.id, fileData.fileSrc, fileData.description, fileData.fileType);
+                });
+            }
+
         }, (error) => {
             console.error("Error getting files for folder:", error);
             showModal("Error loading files for this folder. Please check your connection.");
@@ -141,6 +155,10 @@
 
         if (fileInput.files.length === 0) {
             showModal("Please select a file to upload!");
+            return;
+        }
+        if (!userId) {
+            showModal("Please wait for authentication to complete before uploading.");
             return;
         }
 
@@ -169,11 +187,6 @@
         reader.onload = async function(event) {
             const base64File = event.target.result;
             
-            if (!userId) {
-                showModal("Please wait for authentication to complete before uploading.");
-                return;
-            }
-
             const filesCollection = collection(db, `artifacts/${__app_id}/users/${userId}/folders/${currentFolder}/files`);
             try {
                 await addDoc(filesCollection, {
@@ -182,6 +195,7 @@
                     fileType: fileType,
                     createdAt: new Date()
                 });
+                showModal("File uploaded successfully!");
             } catch (error) {
                 console.error("Error uploading file:", error);
                 showModal("Failed to upload file. Please try again.");
