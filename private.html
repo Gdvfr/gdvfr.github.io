@@ -10,6 +10,20 @@
     body {
         font-family: 'Inter', sans-serif;
     }
+    .video-card-container {
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      position: relative;
+    }
+    .video-card-container video, 
+    .video-card-container img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
@@ -17,7 +31,7 @@
     
     <!-- Header -->
     <header class="text-center mb-10">
-      <h1 class="text-5xl font-extextrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-2">Video Hub</h1>
+      <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-2">Video Hub</h1>
       <p class="text-lg text-gray-400">Your personal video collection, saved in your browser.</p>
     </header>
 
@@ -201,9 +215,8 @@
         const description = descInput.value || "No description provided.";
         const fileType = file.type;
 
-        // FIX: Added 'video/quicktime' for .mov files
-        if (!fileType.startsWith('video/') && !fileType.startsWith('image/') && fileType !== 'video/quicktime') {
-            showModal("The selected file is not a video or image. Please upload a supported file type.");
+        if (!fileType.startsWith('video/') && !fileType.startsWith('image/') && file.name.endsWith('.mov')) {
+            showModal("The selected file is not a supported video or image type. Please upload a supported file type.");
             return;
         }
         
@@ -282,13 +295,18 @@
         card.className = 'relative flex flex-col items-center bg-gray-800 rounded-xl overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-105 group';
         
         let mediaElement;
-        if (fileType.startsWith('video/')) {
-            mediaElement = `<video class="w-full h-auto rounded-lg" controls>
-                                <source src="${fileSrc}">
-                                Your browser does not support the video tag.
-                            </video>`;
+        // FIX: Replaced video and image elements with a unified container for consistent dimensions
+        if (fileType.startsWith('video/') || fileType === 'video/quicktime') {
+            mediaElement = `<div class="video-card-container">
+                                <video controls>
+                                    <source src="${fileSrc}" type="${fileType}">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>`;
         } else if (fileType.startsWith('image/')) {
-            mediaElement = `<img src="${fileSrc}" alt="${description}" class="w-full h-auto object-cover rounded-lg">`;
+            mediaElement = `<div class="video-card-container">
+                                <img src="${fileSrc}" alt="${description}">
+                            </div>`;
         } else {
             mediaElement = `<div class="w-full h-48 flex items-center justify-center text-gray-400">Unsupported File Type</div>`;
         }
