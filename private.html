@@ -10,7 +10,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     // Global variables for Firebase setup
     let __firebase_config;
@@ -24,7 +24,7 @@
         __app_id = appId;
     } catch (e) {
         console.warn("Firebase variables not found, using defaults for local development.");
-        __firebase_config = {};
+        __firebase_config = "{}"; // Fix: Use a valid JSON string
         __initial_auth_token = null;
         __app_id = 'default-app-id';
     }
@@ -34,6 +34,7 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
     let userId = null;
+    let currentFolder = "uncategorized";
 
     // Custom modal UI to replace alert() and confirm()
     const modalContainer = document.getElementById('modal-container');
@@ -73,7 +74,7 @@
             userId = user.uid;
             document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
             console.log("User signed in:", userId);
-            setupFirestoreListener(userId);
+            setupFirestoreListeners(userId);
         } else {
             console.log("No user signed in. Signing in...");
             try {
@@ -89,37 +90,75 @@
         }
     });
 
-    function setupFirestoreListener(uid) {
-        const videosCollection = collection(db, `artifacts/${__app_id}/users/${uid}/videos`);
-        onSnapshot(videosCollection, (snapshot) => {
-            const videoGrid = document.getElementById('video-grid');
-            videoGrid.innerHTML = '';
+    // Main listener setup for both folders and files
+    function setupFirestoreListeners(uid) {
+        // Listen for changes to the folders collection
+        const foldersCollection = collection(db, `artifacts/${__app_id}/users/${uid}/folders`);
+        onSnapshot(foldersCollection, (snapshot) => {
+            const folderList = document.getElementById('folder-list');
+            folderList.innerHTML = ''; // Clear the existing list
+
+            // Add the default 'Uncategorized' folder button
+            addFolderButton('uncategorized');
+            
             snapshot.forEach((doc) => {
-                const videoData = doc.data();
-                addVideoCard(doc.id, videoData.videoSrc, videoData.description);
+                addFolderButton(doc.id);
+            });
+
+            // After rendering, ensure the current folder button is active
+            updateActiveFolderButton();
+        }, (error) => {
+            console.error("Error getting folders:", error);
+            showModal("Error loading folders. Please check your connection.");
+        });
+
+        // Initial setup for the files listener (starts with 'uncategorized')
+        updateFileListener();
+    }
+
+    // Function to update the file listener when the folder changes
+    function updateFileListener() {
+        const filesCollection = collection(db, `artifacts/${__app_id}/users/${userId}/folders/${currentFolder}/files`);
+        onSnapshot(filesCollection, (snapshot) => {
+            const fileGrid = document.getElementById('file-grid');
+            fileGrid.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const fileData = doc.data();
+                addFileCard(doc.id, fileData.fileSrc, fileData.description, fileData.fileType);
             });
         }, (error) => {
-            console.error("Error getting videos:", error);
-            showModal("Error loading videos. Please check your connection.");
+            console.error("Error getting files for folder:", error);
+            showModal("Error loading files for this folder. Please check your connection.");
         });
     }
 
-    // Function to add a new video
-    window.saveVideo = async function() {
-        const fileInput = document.getElementById('video-upload');
-        const descInput = document.getElementById('video-desc');
+    // Function to add a new video or image
+    window.saveFile = async function() {
+        const fileInput = document.getElementById('file-upload');
+        const descInput = document.getElementById('file-desc');
         const uploadButton = document.getElementById('upload-btn');
         const loadingIndicator = document.getElementById('loading-indicator');
 
         if (fileInput.files.length === 0) {
-            showModal("Please select a video file to upload!");
+            showModal("Please select a file to upload!");
             return;
         }
 
         const file = fileInput.files[0];
-        if (!file.type.startsWith('video/')) {
-            showModal("The selected file is not a video. Please upload a video file.");
+        const description = descInput.value || "No description provided.";
+        const fileType = file.type;
+
+        // Check file type
+        if (!fileType.startsWith('video/') && !fileType.startsWith('image/')) {
+            showModal("The selected file is not a video or image. Please upload a supported file type.");
             return;
+        }
+
+        // Check file size (approx. 1MB limit for Firestore)
+        const ONE_MB = 1024 * 1024;
+        if (file.size > ONE_MB) {
+             showModal("The file is too large! Please upload a file smaller than 1MB.");
+             return;
         }
 
         // Show loading state
@@ -128,24 +167,24 @@
 
         const reader = new FileReader();
         reader.onload = async function(event) {
-            const base64Video = event.target.result;
-            const description = descInput.value || "No description provided.";
-
+            const base64File = event.target.result;
+            
             if (!userId) {
                 showModal("Please wait for authentication to complete before uploading.");
                 return;
             }
 
-            const videosCollection = collection(db, `artifacts/${__app_id}/users/${userId}/videos`);
+            const filesCollection = collection(db, `artifacts/${__app_id}/users/${userId}/folders/${currentFolder}/files`);
             try {
-                await addDoc(videosCollection, {
-                    videoSrc: base64Video,
+                await addDoc(filesCollection, {
+                    fileSrc: base64File,
                     description: description,
+                    fileType: fileType,
                     createdAt: new Date()
                 });
             } catch (error) {
-                console.error("Error uploading video:", error);
-                showModal("Failed to upload video. Please try again.");
+                console.error("Error uploading file:", error);
+                showModal("Failed to upload file. Please try again.");
             } finally {
                 // Reset UI
                 fileInput.value = "";
@@ -158,55 +197,96 @@
         reader.readAsDataURL(file);
     };
 
-    // Function to delete a video
-    window.deleteVideo = async function(docId) {
+    // Function to delete a file
+    window.deleteFile = async function(docId) {
         if (!userId) {
             showModal("Please wait for authentication to complete.");
             return;
         }
-        showModal("Are you sure you want to delete this video?", true, async () => {
-            const videoDoc = doc(db, `artifacts/${__app_id}/users/${userId}/videos`, docId);
+        showModal("Are you sure you want to delete this file?", true, async () => {
+            const fileDoc = doc(db, `artifacts/${__app_id}/users/${userId}/folders/${currentFolder}/files`, docId);
             try {
-                await deleteDoc(videoDoc);
+                await deleteDoc(fileDoc);
             } catch (error) {
-                console.error("Error deleting video:", error);
-                showModal("Failed to delete video. Please try again.");
+                console.error("Error deleting file:", error);
+                showModal("Failed to delete file. Please try again.");
             }
         });
     };
 
-    // Function to clear all videos
-    window.clearAllVideos = function() {
-        showModal("This will delete ALL of your videos. Are you sure?", true, async () => {
-            if (!userId) {
-                showModal("Please wait for authentication to complete.");
-                return;
-            }
-            try {
-                const q = query(collection(db, `artifacts/${__app_id}/users/${userId}/videos`));
-                const querySnapshot = await getDocs(q);
-                const deletePromises = [];
-                querySnapshot.forEach((doc) => {
-                    deletePromises.push(deleteDoc(doc.ref));
-                });
-                await Promise.all(deletePromises);
-            } catch (error) {
-                console.error("Error clearing all videos:", error);
-                showModal("Failed to clear all videos. Please try again.");
+    // Function to create a new folder
+    window.createFolder = function() {
+        const folderNameInput = document.getElementById('folder-name-input');
+        const folderName = folderNameInput.value.trim();
+        if (!folderName) {
+            showModal("Please enter a folder name!");
+            return;
+        }
+        if (!userId) {
+            showModal("Please wait for authentication to complete.");
+            return;
+        }
+        
+        const folderDocRef = doc(db, `artifacts/${__app_id}/users/${userId}/folders/${folderName}`);
+        setDoc(folderDocRef, { name: folderName, createdAt: new Date() })
+            .then(() => {
+                folderNameInput.value = '';
+                showModal(`Folder "${folderName}" created!`);
+            })
+            .catch(error => {
+                console.error("Error creating folder:", error);
+                showModal("Failed to create folder. Please try again.");
+            });
+    };
+    
+    // Function to add a folder button to the UI
+    function addFolderButton(folderName) {
+        const folderList = document.getElementById('folder-list');
+        const button = document.createElement('button');
+        button.textContent = folderName;
+        button.onclick = () => {
+            currentFolder = folderName;
+            updateFileListener();
+            updateActiveFolderButton();
+        };
+        button.className = 'folder-btn px-4 py-2 rounded-full border border-gray-700 hover:bg-gray-700 transition-colors duration-200';
+        folderList.appendChild(button);
+    }
+
+    // Function to highlight the active folder button
+    function updateActiveFolderButton() {
+        const buttons = document.querySelectorAll('.folder-btn');
+        buttons.forEach(btn => {
+            if (btn.textContent === currentFolder) {
+                btn.classList.add('bg-gray-700', 'ring-2', 'ring-purple-500', 'text-white');
+                btn.classList.remove('text-gray-400');
+            } else {
+                btn.classList.remove('bg-gray-700', 'ring-2', 'ring-purple-500', 'text-white');
+                btn.classList.add('text-gray-400');
             }
         });
-    };
+    }
 
-    // Function to render a single video card
-    function addVideoCard(docId, videoSrc, description) {
-        const grid = document.getElementById('video-grid');
+    // Function to render a single file card (video or image)
+    function addFileCard(docId, fileSrc, description, fileType) {
+        const grid = document.getElementById('file-grid');
         const card = document.createElement('div');
         card.className = 'relative flex flex-col items-center bg-gray-800 rounded-xl overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-105 group';
+        
+        let mediaElement;
+        if (fileType.startsWith('video/')) {
+            mediaElement = `<video class="w-full h-auto rounded-lg" controls>
+                                <source src="${fileSrc}">
+                                Your browser does not support the video tag.
+                            </video>`;
+        } else if (fileType.startsWith('image/')) {
+            mediaElement = `<img src="${fileSrc}" alt="${description}" class="w-full h-auto object-cover rounded-lg">`;
+        } else {
+            mediaElement = `<div class="w-full h-48 flex items-center justify-center text-gray-400">Unsupported File Type</div>`;
+        }
+        
         card.innerHTML = `
-            <video class="w-full h-auto rounded-lg">
-                <source src="${videoSrc}">
-                Your browser does not support the video tag.
-            </video>
+            ${mediaElement}
             <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 text-white cursor-pointer hover:scale-110 transition-transform duration-300">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -216,22 +296,13 @@
             <div class="p-4 w-full flex-grow">
                 <p class="text-sm text-gray-400 truncate">${description}</p>
             </div>
-            <button onclick="deleteVideo('${docId}')" class="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full text-white shadow-lg transition-transform duration-200 transform hover:scale-110">
+            <button onclick="deleteFile('${docId}')" class="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 rounded-full text-white shadow-lg transition-transform duration-200 transform hover:scale-110">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.328a4 4 0 0 0-4.04-4.04a4 4 0 0 0-4.04 4.04L6 10.74l-.346 9m-4.788 0a4 4 0 0 1-4.04-4.04a4 4 0 0 1-4.04 4.04" />
                 </svg>
             </button>
         `;
         grid.appendChild(card);
-
-        // Add event listener to play video on hover/click
-        const videoElement = card.querySelector('video');
-        const overlay = card.querySelector('.absolute');
-        card.addEventListener('mouseenter', () => videoElement.play());
-        card.addEventListener('mouseleave', () => { videoElement.pause(); videoElement.currentTime = 0; });
-        overlay.addEventListener('click', () => {
-            videoElement.paused ? videoElement.play() : videoElement.pause();
-        });
     }
 
     window.onload = function() {
@@ -254,27 +325,46 @@
       <p id="user-id-display" class="text-sm mt-2 text-gray-500"></p>
     </header>
 
-    <!-- Upload Section -->
+    <!-- Folder and Upload Section -->
     <div class="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-gray-700">
-      <h2 class="text-2xl font-bold mb-4 text-center text-gray-200">Upload a Video</h2>
-      <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-        <input type="file" id="video-upload" accept="video/*" class="w-full sm:w-auto text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 transition-colors duration-200">
-        <input type="text" id="video-desc" placeholder="Enter a description" class="w-full sm:flex-grow p-2 rounded-lg bg-gray-700 text-gray-200 placeholder-gray-500 border border-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent">
-        <div class="flex items-center space-x-2">
-          <button id="upload-btn" onclick="saveVideo()" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-full shadow-lg hover:from-purple-600 hover:to-pink-600 transition-colors duration-200 transform hover:scale-105">
-            Upload
-          </button>
-          <div id="loading-indicator" class="hidden animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
-          <button onclick="clearAllVideos()" class="px-6 py-2 bg-gray-700 text-gray-300 font-semibold rounded-full shadow-lg hover:bg-gray-600 transition-colors duration-200 transform hover:scale-105">
-            Clear All
-          </button>
+      <div class="flex flex-col md:flex-row md:justify-between items-center space-y-4 md:space-y-0 md:space-x-8 mb-6">
+          <!-- Folder Management -->
+          <div class="w-full md:w-1/2">
+              <h2 class="text-2xl font-bold mb-4 text-center text-gray-200">Create a Folder</h2>
+              <div class="flex space-x-2">
+                  <input type="text" id="folder-name-input" placeholder="Enter folder name" class="flex-grow p-2 rounded-lg bg-gray-700 text-gray-200 placeholder-gray-500 border border-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent">
+                  <button onclick="createFolder()" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold rounded-full shadow-lg hover:from-pink-600 hover:to-purple-600 transition-colors duration-200 transform hover:scale-105">
+                    Create
+                  </button>
+              </div>
+          </div>
+          <!-- Upload Section -->
+          <div class="w-full md:w-1/2">
+              <h2 class="text-2xl font-bold mb-4 text-center text-gray-200">Upload a File</h2>
+              <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                  <input type="file" id="file-upload" accept="video/*,image/*" class="w-full sm:w-auto text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 transition-colors duration-200">
+                  <input type="text" id="file-desc" placeholder="Enter a description" class="w-full sm:flex-grow p-2 rounded-lg bg-gray-700 text-gray-200 placeholder-gray-500 border border-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent">
+                  <div class="flex items-center space-x-2">
+                      <button id="upload-btn" onclick="saveFile()" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-full shadow-lg hover:from-purple-600 hover:to-pink-600 transition-colors duration-200 transform hover:scale-105">
+                        Upload
+                      </button>
+                      <div id="loading-indicator" class="hidden animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+                  </div>
+              </div>
+          </div>
+      </div>
+      <!-- Folder List -->
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold mb-2 text-gray-300">Folders</h3>
+        <div id="folder-list" class="flex flex-wrap gap-2 text-sm">
+          <!-- Folder buttons will be dynamically inserted here -->
         </div>
       </div>
     </div>
 
     <!-- Video Grid -->
-    <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Video cards will be dynamically inserted here -->
+    <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- File cards will be dynamically inserted here -->
     </div>
 
     <!-- Custom Modal for Alerts and Confirmations -->
